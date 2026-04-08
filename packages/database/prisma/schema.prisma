@@ -1,0 +1,342 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated"
+}
+
+datasource db {
+  provider = "mongodb"
+}
+
+model User {
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  firstName    String
+  lastName     String?
+  email        String  @unique
+  username     String  @unique
+  password     String
+  role         Role    @default(USER)
+  isActive     Boolean @default(false)
+  isVerified   Boolean @default(false)
+  isEmailVerified  Boolean    @default(false)
+  refreshToken String?
+
+  // ─── 2FA / OTP ─────────────────────────────────────────
+  twoFactorEnabled     Boolean  @default(false)
+  twoFactorSecret      String? // encrypted TOTP secret
+  twoFactorBackupCodes String[] @default([]) // hashed backup codes
+
+    // ─── SSO / OAuth ──────────────────────────────────────
+  authProvider     AuthProvider @default(LOCAL)
+  googleId         String?   @unique  // Google sub ID
+  googleEmail      String?
+  avatarUrl        String?
+  displayName      String?
+
+  // ─── Invitation ───────────────────────────────────────
+  invitationToken      String?      // token invite yang dipakai saat register
+  invitedByEmail       String?      // email admin yang mengundang
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auditLogs       AuditLog[]
+  notifications    Notification[]
+  sentInvitations      Invitation[] @relation("InvitedBy")
+  positions       Position[]
+  exams           Exam[]        @relation("ExamCreator")
+  examsModified   Exam[]        @relation("ExamModifier")
+  examDeleted     Exam[]        @relation("ExamDeleter")
+  certificates    Certificate[]
+  modules         Module[]      @relation("ModuleCreator")
+  modifiedModules Module[]      @relation("ModuleModifier")
+  deletedModules  Module[]      @relation("ModuleDeleter")
+  examAttempts    ExamAttempt[]
+
+  @@map("users")
+}
+
+model Invitation {
+  id           String           @id @default(auto()) @map("_id") @db.ObjectId
+  email        String
+  token        String           @unique
+  role         Role             @default(USER)
+  status       InvitationStatus @default(PENDING)
+
+  invitedById  String           @db.ObjectId
+  invitedBy    User             @relation("InvitedBy", fields: [invitedById], references: [id])
+
+  acceptedById String?          @db.ObjectId
+  acceptedAt   DateTime?
+  revokedAt    DateTime?
+  expiresAt    DateTime
+  note         String?
+
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@map("invitations")
+}
+
+model Notification {
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  type        NotificationType
+  title       String
+  message     String
+  data        Json?
+  isRead      Boolean          @default(false)
+  readAt      DateTime?
+  visibleTo   Role[]           @default([ADMIN])
+  recipientId String?          @db.ObjectId
+  recipient   User?            @relation(fields: [recipientId], references: [id])
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([isRead])
+  @@index([type])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?     @db.ObjectId
+  user      User?       @relation(fields: [userId], references: [id])
+  action    String // e.g. "USER_LOGIN", "2FA_ENABLED", "PROFILE_UPDATE"
+  entity    String? // e.g. "User", "Post"
+  entityId  String? // ID of affected entity
+  oldValue  Json? // state before change
+  newValue  Json? // state after change
+  ipAddress String?
+  userAgent String?
+  requestId String?
+  status    AuditStatus @default(SUCCESS)
+  metadata  Json? // extra info
+  createdAt DateTime    @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Position {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String? @db.ObjectId
+  user     User?   @relation(fields: [userId], references: [id])
+  jobTitle String
+  level    Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("positions")
+}
+
+model Exam {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  moduleId    String?       @db.ObjectId
+  module      Module?       @relation(fields: [moduleId], references: [id])
+  duration    Int
+  maxAttempts Int?
+  question    Question[]
+  attempts    ExamAttempt[]
+  isDeleted   Boolean       @default(false)
+  createdBy   String?       @db.ObjectId
+  creator     User?         @relation("ExamCreator", fields: [createdBy], references: [id])
+  modifyBy    String?       @db.ObjectId
+  modifier    User?         @relation("ExamModifier", fields: [modifyBy], references: [id])
+  deletedBy   String?       @db.ObjectId
+  deleter     User?         @relation("ExamDeleter", fields: [deletedBy], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+  certificates    Certificate[]
+
+  @@index([createdBy])
+  @@index([modifyBy])
+  @@index([deletedBy])
+  @@map("exams")
+}
+
+model Question {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  examId        String?   @db.ObjectId
+  exam          Exam?     @relation(fields: [examId], references: [id])
+  question      String
+  options       String[]
+  correctAnswer String
+  isDeleted     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  module        Module?   @relation(fields: [moduleId], references: [id])
+  moduleId      String?   @db.ObjectId
+
+  @@index([examId])
+  @@map("questions")
+}
+
+model ExamAttempt {
+  id     String  @id @default(auto()) @map("_id") @db.ObjectId
+  examId String? @db.ObjectId
+  exam   Exam?   @relation(fields: [examId], references: [id])
+  userId String  @db.ObjectId
+  user   User    @relation(fields: [userId], references: [id])
+
+  questionIds String[]
+
+  startTime DateTime
+  endTime   DateTime
+  status    AttemptStatus @default(ONGOING)
+  score     Int?
+  isPassed  Boolean?
+  passedAt  DateTime?
+  totalQuestions    Int?
+  answeredQuestions Int?
+  correctQuestions  Int?
+
+  answers   Answer[]
+  certificates    Certificate[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  deletedAt DateTime?
+
+  @@index([examId])
+  @@index([userId])
+  @@map("exam_attempts")
+}
+
+model Answer {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  attemptId  String @db.ObjectId
+  questionId String @db.ObjectId
+
+  attempt ExamAttempt @relation(fields: [attemptId], references: [id])
+
+  selectedAnswer String
+  isCorrect      Boolean?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
+  @@map("answers")
+}
+
+model Certificate {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String?   @db.ObjectId
+  user       User?     @relation(fields: [userId], references: [id])
+  moduleId   String?   @db.ObjectId
+  module     Module?   @relation(fields: [moduleId], references: [id])
+  examId     String?   @db.ObjectId
+  exam       Exam?     @relation(fields: [examId], references: [id])
+  attemptId  String?   @db.ObjectId
+  attempt    ExamAttempt? @relation(fields: [attemptId], references: [id])
+
+  certNumber String    @unique
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  expiresAt  DateTime?
+
+  @@index([userId])
+  @@index([moduleId])
+  @@map("certificates")
+}
+
+model Module {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  createdBy   String?   @db.ObjectId
+  creator     User?     @relation("ModuleCreator", fields: [createdBy], references: [id])
+  modifyBy    String?   @db.ObjectId
+  modifier    User?     @relation("ModuleModifier", fields: [modifyBy], references: [id])
+  deletedBy   String?   @db.ObjectId
+  deleter     User?     @relation("ModuleDeleter", fields: [deletedBy], references: [id])
+  title       String    @unique
+  description String?
+  files       ModuleFile[]
+  isDeleted   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  certificate Certificate[]
+  exam        Exam[]
+  question    Question[]
+
+  @@index([createdBy])
+  @@index([modifyBy])
+  @@index([deletedBy])
+  @@map("modules")
+}
+
+model ModuleFile {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  moduleId  String   @db.ObjectId
+  module    Module   @relation(fields: [moduleId], references: [id])
+
+  filename  String
+  url       String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([moduleId])
+  @@map("module_files")
+}
+
+enum Role {
+  USER
+  ADMIN
+  EXAMINER
+  VERIFICATOR
+}
+
+enum JobTitle {
+  REQUESTER
+  VERIFICATOR
+}
+
+enum AuditStatus {
+  SUCCESS
+  FAILURE
+  PENDING
+}
+
+enum AttemptStatus {
+  ONGOING
+  FINISHED
+  EXPIRED
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+}
+
+enum NotificationType {
+  USER_REGISTERED_LOCAL
+  USER_REGISTERED_GOOGLE
+  USER_INVITED
+  USER_INVITATION_ACCEPTED
+  USER_DEACTIVATED
+  SYSTEM
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}

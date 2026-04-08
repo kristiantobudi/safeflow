@@ -4,26 +4,26 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "dev": "pnpm build --watch",
+    "dev": "bun run build --watch",
     "build": "tsc -b -v",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\""
   },
-  "main": "./dist/entry.js",
-  "types": "./dist/entry.d.ts",
+  "main": "./src/entry.ts",
+  "types": "./src/entry.ts",
   "files": [
-    "./dist/**"
+    "src"
   ],
   "publishConfig": {
     "access": "public"
   },
   "exports": {
     ".": {
-      "import": "./dist/entry.js",
-      "require": "./dist/entry.js"
+      "import": "./src/entry.ts",
+      "default": "./src/entry.ts"
     },
     "./*": {
-      "import": "./dist/*.js",
-      "require": "./dist/*.js"
+      "import": "./src/*.ts",
+      "default": "./src/*.ts"
     }
   },
   "dependencies": {

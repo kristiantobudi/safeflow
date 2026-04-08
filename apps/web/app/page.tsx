@@ -1,8 +1,8 @@
 import type { Link } from '@repo/api';
-import { Button } from '@repo/ui/button';
 import Image, { type ImageProps } from 'next/image';
 
 import styles from './page.module.css';
+import { Button } from '@repo/ui/components/ui/button';
 
 type Props = Omit<ImageProps, 'src'> & {
   srcLight: string;
@@ -85,9 +85,7 @@ export default async function Home() {
           </a>
         </div>
 
-        <Button appName="web" className={styles.secondary}>
-          Open alert
-        </Button>
+        <Button className={styles.secondary}>Open alert</Button>
 
         {links.length > 0 ? (
           <div className={styles.ctas}>

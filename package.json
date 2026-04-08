@@ -1,5 +1,5 @@
 {
-  "name": "my-turborepo",
+  "name": "safeflow",
   "version": "0.0.0",
   "private": true,
   "description": "",
@@ -26,5 +26,10 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
+    "postcss": "^8.5.9",
+    "tailwindcss": "^4.2.2"
+  }
 }
