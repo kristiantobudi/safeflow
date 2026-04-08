@@ -6,11 +6,12 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated"
+  output   = "../generated/client"
 }
 
 datasource db {
   provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -21,6 +22,7 @@ model User {
   username     String  @unique
   password     String
   role         Role    @default(USER)
+  jobTitle     JobTitle @default(REQUESTER)
   isActive     Boolean @default(false)
   isVerified   Boolean @default(false)
   isEmailVerified  Boolean    @default(false)
@@ -57,6 +59,12 @@ model User {
   modifiedModules Module[]      @relation("ModuleModifier")
   deletedModules  Module[]      @relation("ModuleDeleter")
   examAttempts    ExamAttempt[]
+  projects        Project[]     @relation("ProjectCreator")
+  projectsModified Project[]     @relation("ProjectModifier")
+  projectsDeleted Project[]     @relation("ProjectDeleter")
+  projectsApproved Project[]     @relation("ProjectApprovedBy")
+  projectsRejected Project[]     @relation("ProjectRejectedBy")
+  approvalLogs    ApprovalLog[] @relation("ApprovalLogs")
 
   @@map("users")
 }
@@ -296,6 +304,122 @@ model ModuleFile {
   @@map("module_files")
 }
 
+model Project {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  unitKerja      String
+  lokasiKerja String?
+  tanggal String?
+  revisiDocument Int?
+  statusDocument String?
+  status ProjectStatus @default(DRAFT)
+  hiracs    hirac[]
+
+  createdAt DateTime @default(now())
+  createdBy String? @db.ObjectId
+  creator User? @relation("ProjectCreator", fields: [createdBy], references: [id])
+  modifyBy String? @db.ObjectId
+  modifier User? @relation("ProjectModifier", fields: [modifyBy], references: [id])
+  deletedBy String? @db.ObjectId
+  deleter User? @relation("ProjectDeleter", fields: [deletedBy], references: [id])
+  
+  isDeleted Boolean @default(false)
+  isApproved Boolean @default(false)
+  isRejected Boolean @default(false)
+  
+  approvedBy String? @db.ObjectId
+  approvedUser User? @relation("ProjectApprovedBy", fields: [approvedBy], references: [id])
+  rejectedBy String? @db.ObjectId
+  rejectedUser User? @relation("ProjectRejectedBy", fields: [rejectedBy], references: [id])
+  
+  approvedAt DateTime?
+  rejectedAt DateTime?
+  deletedAt DateTime?
+  updatedAt DateTime @updatedAt
+
+
+  approvalLogs ApprovalLog[]
+
+  @@map("projects")
+}
+
+model ApprovalLog {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  projectId   String        @db.ObjectId
+  project     Project       @relation(fields: [projectId], references: [id])
+  
+  approvedBy  String        @db.ObjectId
+  approver    User          @relation("ApprovalLogs", fields: [approvedBy], references: [id])
+  
+  level       Int           // 1, 2, 3 dst
+  action      ApprovalAction
+  comment     String?
+  createdAt   DateTime      @default(now())
+
+  @@map("approval_logs")
+}
+
+model hirac {
+  id                               String             @id @default(auto()) @map("_id") @db.ObjectId
+  no                               Int?
+  kegiatan                         String
+  kategori                         ActivityCategory   // R, NR, E
+  identifikasiBahaya               String
+  akibatRisiko                     String
+  
+  // Penilaian Risiko Awal
+  penilaianAwal                    RiskAssessment
+  risikoDapatDiterimaAwal          Boolean            @default(false)
+  
+  peraturanTerkait                 String?
+  
+  // Hirarki Pengendalian Risiko
+  pengendalian                     String
+  
+  // Penilaian Risiko Lanjutan (Residual Risk)
+  penilaianLanjutan                RiskAssessment
+  risikoDapatDiterimaLanjutan      Boolean            @default(false)
+  
+  peluang                          String?
+  picId                            String?            @db.ObjectId
+  status                           StatusControl      @default(OPEN)
+  
+  // Metadata untuk Alur Digital (berdasarkan file SafeFlow/HSE Digital)
+  createdAt                        DateTime           @default(now())
+  updatedAt                        DateTime           @updatedAt
+  projectId                        String?            @db.ObjectId
+  project                          Project?           @relation(fields: [projectId], references: [id])
+}
+
+// Objek Tertanam untuk Penilaian Risiko
+type RiskAssessment {
+  akibat             Int       // Nilai numerik dari sheet Keterangan
+  kemungkinan        String    // A, B, C, D, E
+  tingkatRisiko      RiskLevel // Low, Medium, High, Extreme
+}
+
+// Objek Tertanam untuk 5 Hirarki Pengendalian
+
+// Enums untuk standarisasi data
+enum ActivityCategory {
+  R   // Routine
+  NR  // Non-Routine
+  E   // Emergency
+}
+
+enum RiskLevel {
+  L   // Low
+  M   // Medium
+  H   // High
+  E   // Extreme
+}
+
+enum StatusControl {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  REVISED
+}
+
 enum Role {
   USER
   ADMIN
@@ -339,4 +463,21 @@ enum InvitationStatus {
   ACCEPTED
   EXPIRED
   REVOKED
+}
+
+enum ApprovalAction {
+  SUBMITTED
+  APPROVED
+  REJECTED
+  REVISION_REQUESTED
+}
+
+enum ProjectStatus {
+  DRAFT         // Baru dibuat, belum diajukan
+  SUBMITTED     // Diajukan oleh creator
+  L1_REVIEW     // Menunggu approval level 1 (misal: VERIFICATOR)
+  L2_REVIEW     // Menunggu approval level 2 (misal: EXAMINER)  
+  APPROVED      // Final approved (ADMIN)
+  REJECTED      // Ditolak di level manapun
+  REVISION      // Dikembalikan untuk revisi
 }

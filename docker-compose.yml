@@ -1,52 +1,62 @@
-version: '3.8'
-
-volumes:
-  database:
-    driver: local
-
 services:
-  web:
-    container_name: web
-    build:
-      context: .
-      dockerfile: ./apps/web/Dockerfile
-    restart: always
-    ports:
-      - 3000:3000
-    networks:
-      - app_network
   api:
-    container_name: api
     build:
       context: .
-      dockerfile: ./apps/api/Dockerfile
+      dockerfile: docker/api/Dockerfile
+    container_name: safeflow-api
     restart: always
     ports:
-      - 3001:3001
+      - "1945:1945"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+      - MONGODB_URI=${MONGODB_URI}
+    depends_on:
+      - redis
     networks:
-      - app_network
+      - safeflow-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
+    container_name: safeflow-web
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://api:1945/api/v1
+    depends_on:
+      - api
+    networks:
+      - safeflow-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   redis:
-    image: redis:latest
-    container_name: redis
+    image: redis:7-alpine
+    container_name: safeflow-redis
+    restart: always
     ports:
       - "6379:6379"
     volumes:
-      - database:/var/lib/redis
-    environment:
-      - REDIS_PASSWORD=redis
-      - REDIS_DB=master-hse
-  mongodb:
-    image: mongo:latest
-    container_name: mongodb
-    ports:
-      - "27017:27017"
-    volumes:
-      - database:/var/lib/mongodb
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=root
-      - MONGO_INITDB_DATABASE=master-hse
+      - redis_data:/data
+    networks:
+      - safeflow-network
 
 networks:
-  app_network:
-    external: true
+  safeflow-network:
+    driver: bridge
+
+volumes:
+  redis_data:

@@ -20,6 +20,9 @@ test-results/
 playwright/.cache/
 playwright-report/
 
+# Database
+/packages/database/generated
+
 
 # Turbo
 .turbo

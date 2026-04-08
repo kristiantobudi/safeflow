@@ -1,4 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../database/prisma.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { AuditStatus } from '@repo/database';
@@ -135,5 +136,50 @@ export class AuditLogService {
       where: { entity, entityId },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  /**
+   * Archive logs older than X days (default 30)
+   * Runs every day at midnight
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleLogCleanup() {
+    this.logger.log('Starting scheduled audit log cleanup...', 'AuditLogService');
+    const deletedCount = await this.archiveLogs(30);
+    this.logger.log(
+      `Cleanup finished. Deleted ${deletedCount} logs.`,
+      'AuditLogService',
+    );
+  }
+
+  async archiveLogs(olderThanDays: number): Promise<number> {
+    const thresholdDate = new Date();
+    thresholdDate.setDate(thresholdDate.getDate() - olderThanDays);
+
+    try {
+      // 1. In a production app, you would fetch and upload to S3 here
+      // const logsToArchive = await this.prisma.auditLog.findMany({
+      //   where: { createdAt: { lt: thresholdDate } }
+      // });
+      // await uploadToS3(JSON.stringify(logsToArchive));
+
+      // 2. Delete from database to free up space
+      const result = await this.prisma.auditLog.deleteMany({
+        where: {
+          createdAt: {
+            lt: thresholdDate,
+          },
+        },
+      });
+
+      return result.count;
+    } catch (error: any) {
+      this.logger.error(
+        'Failed to archive audit logs: ' + error.message,
+        error.stack,
+        'AuditLogService',
+      );
+      return 0;
+    }
   }
 }

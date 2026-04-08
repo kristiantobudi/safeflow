@@ -1,47 +1,36 @@
 {
   "name": "@repo/database",
-  "version": "1.0.0",
-  "main": "./dist/client.js",
-  "module": "./dist/client.mjs",
-  "types": "./src/client.ts",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/client.ts",
-      "import": "./dist/client.mjs",
-      "require": "./dist/client.js",
-      "default": "./dist/client.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     }
   },
   "scripts": {
+    "build": "tsc",
+    "generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
-    "db:push": "prisma db push",
     "db:seed": "tsx src/seed.ts",
-    "build": "tsup src/client.ts --format cjs,esm --external ./generated/index.js && node scripts/copy-generated.js",
-    "dev": "tsup src/client.ts --watch --format cjs,esm --external ./generated/index.js --onSuccess \"node scripts/copy-generated.js\"",
     "format": "prisma format",
-    "generate": "prisma generate",
     "lint": "eslint . --max-warnings 0",
     "prebuild": "bun run generate",
     "predev": "bun run generate",
     "studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/client": "latest",
-    "@prisma/client-runtime-utils": "7.2.0",
-    "dotenv": "^17.2.3",
-    "mongoose": "^8.10.2"
+    "@prisma/client": "^5.22.0"
   },
   "devDependencies": {
-    "@prisma/config": "^7.7.0",
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "@types/pg": "^8.16.0",
-    "eslint": "^8.57.0",
-    "prisma": "latest",
-    "rimraf": "^5.0.5",
-    "tsup": "^8.0.2",
-    "tsx": "4.21.0",
-    "typescript": "5.5.4"
+    "@repo/typescript-config": "*",
+    "prisma": "^5.22.0",
+    "typescript": "^5.3.3"
   }
 }

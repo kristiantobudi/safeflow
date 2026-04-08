@@ -2,6 +2,7 @@ import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
+  HttpException,
   HttpStatus,
   Logger,
 } from '@nestjs/common';
@@ -15,39 +16,32 @@ export class PrismaExceptionFilter implements ExceptionFilter {
   catch(exception: Prisma.PrismaClientKnownRequestError, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
 
-    // Prisma Error Codes: https://www.prisma.io/docs/reference/api-reference/error-reference#error-codes
     switch (exception.code) {
-      case 'P2002': {
+      case 'P2002': // Duplicate unique field
         status = HttpStatus.CONFLICT;
-        const target = (exception.meta?.target as string[]) || [];
-        message = `Unique constraint failed on the fields: (${target.join(', ')})`;
+        message = `Data already exists: ${exception.meta?.target}`;
         break;
-      }
-      case 'P2025': {
+      case 'P2025': // Record not found
         status = HttpStatus.NOT_FOUND;
-        message = (exception.meta?.cause as string) || 'Record not found';
+        message = 'Record not found';
         break;
-      }
-      case 'P2003': {
+      case 'P2003': // Foreign key constraint
         status = HttpStatus.BAD_REQUEST;
-        message = 'Foreign key constraint failed';
-        break;
-      }
-      default:
-        this.logger.error(`Prisma error ${exception.code}: ${exception.message}`);
+        message = 'Related record not found';
         break;
     }
+
+    this.logger.error(`Prisma error ${exception.code}: ${exception.message}`);
 
     response.status(status).json({
       statusCode: status,
       message,
+      error: exception.code,
       timestamp: new Date().toISOString(),
-      path: request.url,
     });
   }
 }

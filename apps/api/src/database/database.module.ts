@@ -1,11 +1,12 @@
 import { Module, Global } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import mongoose from 'mongoose';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { PrismaService } from './prisma.service';
 
 @Global()
 @Module({
+  imports: [ConfigModule],
   providers: [
     PrismaService,
     {
