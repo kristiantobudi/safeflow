@@ -6,7 +6,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
-import MongoStore from 'connect-mongo';
+import pgSession from 'connect-pg-simple';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
@@ -56,6 +56,8 @@ async function bootstrap() {
   const sessionMaxAge =
     Number(configService.get('SESSION_MAX_AGE')) || 86400000;
 
+  const PgStore = pgSession(session);
+
   // ─── Session ─────────────────────────────────────────────────────────────
   app.use(
     session({
@@ -64,12 +66,10 @@ async function bootstrap() {
       saveUninitialized: false,
       rolling: true,
       name: 'sid',
-      store: MongoStore.create({
-        mongoUrl: configService.get<string>('MONGODB_URI'),
-        collectionName: 'sessions',
-        ttl: sessionMaxAge / 1000, // in seconds
-        autoRemove: 'interval',
-        autoRemoveInterval: 10, // minutes
+      store: new PgStore({
+        conString: configService.get<string>('DATABASE_URL'),
+        tableName: 'session',
+        ttl: sessionMaxAge / 1000,
       }),
       cookie: {
         httpOnly: true,

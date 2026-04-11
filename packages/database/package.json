@@ -9,16 +9,20 @@
       "import": "./dist/index.js",
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./generated/client": {
+      "types": "./generated/client/index.d.ts",
+      "import": "./generated/client/index.js",
+      "require": "./generated/client/index.js"
     }
   },
   "scripts": {
     "build": "tsc",
     "generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:studio": "prisma studio",
-    "db:migrate:deploy": "prisma migrate deploy",
-    "db:migrate:dev": "prisma migrate dev",
-    "db:seed": "tsx src/seed.ts",
+    "push": "prisma db push",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:dev": "prisma migrate dev",
+    "seed": "tsx src/seed.ts",
     "format": "prisma format",
     "lint": "eslint . --max-warnings 0",
     "prebuild": "bun run generate",
@@ -26,10 +30,12 @@
     "studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0"
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
+    "@types/bcryptjs": "^2.4.2",
     "prisma": "^5.22.0",
     "typescript": "^5.3.3"
   }

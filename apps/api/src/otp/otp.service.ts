@@ -291,7 +291,10 @@ export class OtpService {
     hashedCodes: string[],
   ): Promise<boolean> {
     for (let i = 0; i < hashedCodes.length; i++) {
-      const match = await bcrypt.compare(inputCode, hashedCodes[i]);
+      const hashedCode = hashedCodes[i];
+      if (!hashedCode) continue;
+
+      const match = await bcrypt.compare(inputCode, hashedCode);
       if (match) {
         // Remove used backup code (one-time use)
         const updatedCodes = hashedCodes.filter((_, idx) => idx !== i);

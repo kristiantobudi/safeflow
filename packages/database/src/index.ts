@@ -6,5 +6,16 @@ export {
   InvitationStatus,
   AuthProvider,
   NotificationType,
+  ActivityCategory,
+  RiskLevel,
+  StatusControl,
+  ProjectStatus,
+  ApprovalStatus,
+  JobTitle,
+  DiffType,
+  VersionStatus,
+  TipePotensi,
+  TipeKontrol,
+  VendorStatus,
 } from '../generated/client';
 export type { User } from '../generated/client';

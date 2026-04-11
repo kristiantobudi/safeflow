@@ -11,9 +11,9 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=redis://redis:6379
-      - MONGODB_URI=${MONGODB_URI}
     depends_on:
       - redis
+      - postgres
     networks:
       - safeflow-network
     logging:
@@ -43,6 +43,21 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  postgres:
+    image: postgres:16-alpine
+    container_name: safeflow-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: safeflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - safeflow-network
+
   redis:
     image: redis:7-alpine
     container_name: safeflow-redis
@@ -60,3 +75,4 @@ networks:
 
 volumes:
   redis_data:
+  postgres_data:

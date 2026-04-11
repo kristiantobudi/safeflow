@@ -21,6 +21,8 @@ import { AppRedisModule } from './common/redis/redis.module';
 import { AuthModule } from './auth/auth.module';
 import { InvitationsModule } from './invitations/invitations.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ProjectsModule } from './hse/projects/projects.module';
+import { HiracModule } from './hse/hirac/hirac.module';
 
 @Module({
   imports: [
@@ -78,6 +80,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     AppRedisModule,
     InvitationsModule,
     NotificationsModule,
+    ProjectsModule,
+    HiracModule,
   ],
 })
 export class AppModule {}
