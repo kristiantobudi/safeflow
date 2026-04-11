@@ -26,7 +26,7 @@ export class PrismaService
 
   async onModuleInit() {
     await this.$connect();
-    this.logger.log('Prisma connected to MongoDB');
+    this.logger.log('Prisma connected to PostgreSQL');
 
     (this as any).$on('error', (e: any) => {
       this.logger.error('Prisma error: ' + e.message);

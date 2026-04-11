@@ -50,7 +50,7 @@ export async function createTestApp(
 }
 
 export async function cleanDatabase(prisma: PrismaService) {
-  // Clear all collections for MongoDB
+  // Clear all tables for PostgreSQL
   // Delete child/dependent records first to avoid relation violations
   await prisma.answer.deleteMany();
   await prisma.certificate.deleteMany();
@@ -62,6 +62,11 @@ export async function cleanDatabase(prisma: PrismaService) {
   await prisma.position.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.invitation.deleteMany();
-  await prisma.auditLog.deleteMany();
+  await prisma.versionApproval.deleteMany();
+  await prisma.hiracVersion.deleteMany();
+  await prisma.projectVersion.deleteMany();
+  await prisma.hirac.deleteMany();
+  await prisma.project.deleteMany();
+  await prisma.session.deleteMany();
   await prisma.user.deleteMany();
 }

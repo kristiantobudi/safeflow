@@ -9,19 +9,27 @@ export class RedisService {
   /**
    * Set a key with a value and optional TTL (in seconds)
    */
-  async set(key: string, value: string, ttl?: number): Promise<void> {
+  async set(key: string, value: any, ttl?: number): Promise<void> {
+    const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
     if (ttl) {
-      await this.redis.set(key, value, 'EX', ttl);
+      await this.redis.set(key, stringValue, 'EX', ttl);
     } else {
-      await this.redis.set(key, value);
+      await this.redis.set(key, stringValue);
     }
   }
 
   /**
    * Get a value by key
    */
-  async get(key: string): Promise<string | null> {
-    return this.redis.get(key);
+  async get<T = string>(key: string): Promise<T | null> {
+    const value = await this.redis.get(key);
+    if (!value) return null;
+
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return value as unknown as T;
+    }
   }
 
   /**
