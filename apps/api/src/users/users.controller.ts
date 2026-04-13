@@ -7,6 +7,8 @@ import {
   UseGuards,
   ParseIntPipe,
   DefaultValuePipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -14,6 +16,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@repo/database';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -36,7 +39,9 @@ export class UsersController {
   }
 
   @Patch('me')
+  @UseInterceptors(FileInterceptor('avatar'))
   async updateProfile(
+    @UploadedFile() file: Express.Multer.File,
     @CurrentUser('id') userId: string,
     @Body()
     body: {
@@ -47,7 +52,7 @@ export class UsersController {
       password?: string;
     },
   ) {
-    const updated = await this.usersService.updateProfile(userId, body);
+    const updated = await this.usersService.updateProfile(userId, body, file);
     return { message: 'Profile updated', data: updated };
   }
 

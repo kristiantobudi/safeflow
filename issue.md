@@ -1,267 +1,102 @@
-# Migrasi Database: MongoDB → PostgreSQL (Safeflow)
+# Implementasi Setup MinIO dan CRUD Vendor dengan File Upload
 
-## Latar Belakang
+Rencana ini bertujuan untuk menyelesaikan _issue_ terkait penambahan fitur CRUD pada entitas Vendor yang dilengkapi dengan fitur upload `logo` menggunakan penyimpanan S3-compatible, yaitu MinIO.
 
-Safeflow saat ini menggunakan **MongoDB** sebagai database utama (via Prisma ORM) dengan konfigurasi:
-
-- `DATABASE_URL=mongodb://localhost:27017/master-hse`
-- `MONGODB_URI=mongodb://localhost:27017/master-hse`
-- Session store menggunakan `connect-mongo`
-- `mongoose` masih diimport di `database.module.ts`
-
-Tujuan migrasi: beralih ke **PostgreSQL** + menghapus semua dependensi MongoDB, lalu membuat seed data + E2E test yang berjalan di atas PostgreSQL.
-
----
+Sejauh ini, API backend (NestJS) belum dikonfigurasi untuk MinIO dan modul Vendor baru memiliki sebagian logic CRUD (Create & Update tanpa file upload).
 
 ## User Review Required
 
-> [!IMPORTANT]
-> **Embedded Type `RiskAssessment` (MongoDB-only)**: Schema Prisma saat ini menggunakan `type RiskAssessment` (embedded document, hanya ada di MongoDB). Di PostgreSQL, ini harus diubah menjadi **kolom-kolom terpisah** langsung di tabel `Hirac`. Contoh: `penilaianAwalAkibat`, `penilaianAwalKemungkinan`, `penilaianAwalTingkatRisiko`, dst.
-
-> [!WARNING]
-> **Data Existing**: Jika ada data di MongoDB yang perlu dimigrasikan, pipeline migrasi data perlu dibuat terpisah. Plan ini **tidak** mencakup migrasi data lama — hanya migrasi schema dan kode.
-
-> [!CAUTION]
-> **Session Store**: `connect-mongo` digunakan untuk session. Di PostgreSQL, akan diganti pakai **`connect-pg-simple`** (session store berbasis PostgreSQL).
-
----
+> [!NOTE]
+> Rencana ini telah diperbarui sesuai instruksi untuk menggunakan _module wrapper_ `nestjs-minio-client` dipadu library bawaan `minio`, serta menyertakan proses penghapusan otomatis (_auto-delete_) file logo pada _bucket_ apabila pengguna melakukan pembaruan (update) gambar vendor. File yang disimpan ke MinIO berada dalam bentuk objek biner (_blob_) dengan tipe konten (Content-Type) yang menyesuaikan _mime type_ asli file yang diunggah.
 
 ## Proposed Changes
 
-### 1. Database Package (`packages/database`)
+---
 
-#### [MODIFY] [schema.prisma](file:///c:/Users/HP/Desktop/safeflow/packages/database/prisma/schema.prisma)
+### Lingkungan Environment & Dependencies
 
-Perubahan utama:
+Penambahan _package dependencies_ dan penyesuaian file `.env`.
 
-- Ubah `datasource db` dari `mongodb` → `postgresql`
-- Hapus semua `@db.ObjectId` dan `@map("_id")`
-- Ubah semua `String @id @default(auto())` → `String @id @default(cuid())`
-- Hapus embedded type `RiskAssessment` — flatten field-field-nya ke model `Hirac`
-- Hapus `String[]` di `twoFactorBackupCodes` dan `options` → ganti dengan relasi tabel terpisah atau `Json`
-- Hapus `Role[]` di `Notification.visibleTo` → ganti dengan `Json` atau tabel pivot
-- Field `questionIds String[]` di `ExamAttempt` → ganti dengan `Json`
+#### [MODIFY] package.json (di dalam folder apps/api)
 
-Schema baru (rangkuman per model):
+- Install library wrapper `nestjs-minio-client` serta library utamanya `minio` dengan command `bun add nestjs-minio-client minio`.
+- Install `@nestjs/platform-express` dan `multer` (biasanya telah ter-install pada NextJS bawaan, jika belum pastikan untuk interceptor _file upload_).
 
-```prisma
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+#### [MODIFY] .env
 
-model User {
-  id String @id @default(cuid())
-  // ... semua field sama kecuali:
-  twoFactorBackupCodes Json     @default("[]")  // ganti dari String[]
-  // hapus @db.ObjectId dari semua FK
-}
-
-model Hirac {
-  // ganti embedded RiskAssessment menjadi kolom flat:
-  penilaianAwalAkibat            Int
-  penilaianAwalKemungkinan       String
-  penilaianAwalTingkatRisiko     RiskLevel
-  penilaianLanjutanAkibat        Int
-  penilaianLanjutanKemungkinan   String
-  penilaianLanjutanTingkatRisiko RiskLevel
-}
-
-model ExamAttempt {
-  questionIds Json @default("[]")  // ganti dari String[]
-}
-
-model Question {
-  options Json  // ganti dari String[]
-}
-
-model Notification {
-  visibleTo Json @default("[\"ADMIN\"]")  // ganti dari Role[]
-}
-```
-
-#### [MODIFY] [package.json](file:///c:/Users/HP/Desktop/safeflow/packages/database/package.json)
-
-- Downgrade/tetap di `@prisma/client ^5.22.0` dan `prisma ^5.22.0` (sudah kompatibel dengan PostgreSQL)
-- Tambahkan script `db:seed`
-
-#### [NEW] `packages/database/src/seed.ts`
-
-Seed data untuk:
-
-- 4 User: 1 ADMIN, 1 VERIFICATOR, 1 EXAMINER, 1 USER biasa
-- 1 Module dengan 1 ModuleFile
-- 1 Exam dengan 5 Question
-- 1 Project dengan 2 Hirac
-- 2 ProjectApproval step
-
-#### [MODIFY] [scripts/setup-db.ts](file:///c:/Users/HP/Desktop/safeflow/packages/database/scripts/setup-db.ts)
-
-- Hapus `$runCommandRaw` (MongoDB-only)
-- Untuk PostgreSQL, TTL/cleanup audit log ditangani via cron job di API (sudah ada)
+- Tambahkan konfigurasi _environment variables_ untuk MinIO Client:
+  ```env
+  MINIO_ENDPOINT=localhost
+  MINIO_PORT=9000
+  MINIO_USE_SSL=false
+  MINIO_ACCESS_KEY=your_minio_access_key
+  MINIO_SECRET_KEY=your_minio_secret_key
+  MINIO_BUCKET_NAME=safeflow-assets
+  ```
 
 ---
 
-### 2. API App (`apps/api`)
+### MinIO Storage Service Component
 
-#### [MODIFY] [database.module.ts](file:///c:/Users/HP/Desktop/safeflow/apps/api/src/database/database.module.ts)
+Membuat Modul dan Service _reusable_ untuk berinteraksi dengan server MinIO localhost:9000.
 
-- **Hapus seluruh provider `MONGODB_CONNECTION`** (mongoose)
-- Hanya menyediakan `PrismaService`
-- Hapus import `mongoose`
+#### [NEW] apps/api/src/common/minio/minio.module.ts
 
-```typescript
-@Global()
-@Module({
-  imports: [ConfigModule],
-  providers: [PrismaService],
-  exports: [PrismaService],
-})
-export class DatabaseModule {}
-```
+- Lakukan _import_ modul `NestMinioModule.registerAsync()` atau langsung konfigurasikan dari environment variable agar terhubung. Modul ini di set `@Global()`.
 
-#### [MODIFY] [prisma.service.ts](file:///c:/Users/HP/Desktop/safeflow/apps/api/src/database/prisma.service.ts)
+#### [NEW] apps/api/src/common/minio/minio.service.ts
 
-- Update log message dari `'Prisma connected to MongoDB'` → `'Prisma connected to PostgreSQL'`
+- Lakukan metode _Inject_ client SDK Minio dari _wrapper_ `nestjs-minio-client`.
+- Buat fungsi `uploadFile(file: Express.Multer.File, folderName: string): Promise<string>` yang mana file ini adalah berupa file _blob_/_binary_. Fungsi ini juga bertugas me-return _string URL_ menuju tempat file di bucket minIO.
+- Buat fungsi `deleteFile(fileUrl: string): Promise<void>` untuk menghilangkan referensi _blob object_ lama di _bucket_ tersebut berdasarkan URL yang di-pass.
 
-#### [MODIFY] [main.ts](file:///c:/Users/HP/Desktop/safeflow/apps/api/src/main.ts)
+#### [MODIFY] apps/api/src/app.module.ts
 
-- Hapus import `MongoStore from 'connect-mongo'`
-- Ganti session store dengan `connect-pg-simple`:
-
-```typescript
-import pgSession from 'connect-pg-simple';
-const PgStore = pgSession(session);
-// ...
-store: new PgStore({
-  conString: configService.get<string>('DATABASE_URL'),
-  tableName: 'sessions',
-  ttl: sessionMaxAge / 1000,
-}),
-```
-
-#### [MODIFY] [package.json](file:///c:/Users/HP/Desktop/safeflow/apps/api/package.json)
-
-Dependensi yang perlu dihapus:
-
-- `connect-mongo`
-- `mongoose`
-
-Dependensi yang perlu ditambahkan:
-
-- `connect-pg-simple`
-- `@types/connect-pg-simple`
+- Import `MinioModule` yang baru dibuat agar terdaftar di dalam _container_ NestJS.
 
 ---
 
-### 3. Environment Variables (`.env`)
+### Vendor Component
 
-#### [MODIFY] [.env](file:///c:/Users/HP/Desktop/safeflow/.env)
+Menyesuaikan logic controller dan service pada Vendor agar mendukung interceptor Multer dalam menerima file, memproses ke MinIO, dan melengkapi `Get` serta `Delete`.
 
-```bash
-# Database - PostgreSQL
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/safeflow
+#### [MODIFY] apps/api/src/hse/vendor/vendor.controller.ts
 
-# Hapus:
-# MONGODB_URI=...
-# (line DATABASE_URL lama diganti)
-```
+- Tambahkan import `FileInterceptor` dari `@nestjs/platform-express`.
+- Tambahkan dekorator `@UseInterceptors(FileInterceptor('logo'))` pada _route_ `@Post()` (addVendor) dan `@Patch(':id')` (updateVendor).
+- Tambahkan _parameter_ `@UploadedFile() file: Express.Multer.File` ke kedua method tersebut.
+- Teruskan object parameter `file` ke dalam eksekusi VendorService.
+- Tambahkan _route_ baru untuk _read_ dan _delete_:
+  - `@Get()` untuk memanggil daftar seluruh file Vendor.
+  - `@Get(':id')` untuk menampilkan single Vendor.
+  - `@Delete(':id')` untuk menghapus data Vendor (bisa berupa hard-delete atau update `.isDeleted` field).
 
----
+#### [MODIFY] apps/api/src/hse/vendor/vendor.service.ts
 
-### 4. Docker Compose (`docker-compose.yml`)
+- Lakukan _Inject_ `MinioService` melalui konstruktor kelas.
+- Di method `addVendor`: Cek tipe parameter data `file`. Jika ada isinya, panggil `await minioService.uploadFile(file)`. Ambil ekstensi _URL_ return, lalu _assign_ nilai tersebut ke property `data.vendorLogo` sebelum disimpan ke _DB Prisma_.
+- Di method `updateVendor`: Lakukan verifikasi database vendor terlebih dahulu. Bila file di-upload, jalankan skrip penghapusan file S3 logo lama meggunakan fungsi `await minioService.deleteFile(oldData.vendorLogo)`, lantas _upload_ kembali logo yang baru.
+- _Update_ skrip lain untuk `deleteVendor` yang di dalamnya ikut menghapus file MinIO _blob_ dan implementasi standar CRUD `getAllVendors` dan `getVendorById`.
 
-#### [MODIFY] [docker-compose.yml](file:///c:/Users/HP/Desktop/safeflow/docker-compose.yml)
+#### [MODIFY] apps/api/src/hse/vendor/vendor.module.ts
 
-- Hapus referensi `MONGODB_URI`
-- Tambahkan service `postgres`:
+- Import `MinioModule` (Hanya perlu jika tidak di-set `@Global` pada `minio.module.ts` sebelumnya).
 
-```yaml
-postgres:
-  image: postgres:16-alpine
-  container_name: safeflow-postgres
-  restart: always
-  environment:
-    POSTGRES_USER: postgres
-    POSTGRES_PASSWORD: postgres
-    POSTGRES_DB: safeflow
-  ports:
-    - '5432:5432'
-  volumes:
-    - postgres_data:/var/lib/postgresql/data
-  networks:
-    - safeflow-network
-```
+## Open Questions
 
----
-
-### 5. Test Setup (`apps/api/test/setup.ts`)
-
-#### [MODIFY] [setup.ts](file:///c:/Users/HP/Desktop/safeflow/apps/api/test/setup.ts)
-
-- Update komentar dari `MongoDB` → `PostgreSQL`
-- Untuk `cleanDatabase`, urutan delete sudah benar (child-first). Tidak ada perubahan logika, hanya pastikan transaction PostgreSQL berjalan
-
----
-
-### 6. File yang Perlu Diperiksa (Mungkin Ada Referensi MongoDB)
-
-Berikut file-file yang kemungkinan besar masih referensi MongoDB dan harus dicek:
-
-| File                                | Isu Potensial                               |
-| ----------------------------------- | ------------------------------------------- |
-| `apps/api/src/auth/auth.service.ts` | Mungkin ada raw query MongoDB               |
-| `apps/api/src/hse/hirac/*.ts`       | Menggunakan field `RiskAssessment` embedded |
-| `apps/api/src/hse/projects/*.ts`    | Mungkin ada raw MongoDB aggregation         |
-| `apps/api/src/audit-log/*.ts`       | TTL index MongoDB-specific                  |
-| `apps/api/src/common/redis/*.ts`    | Tidak berubah (Redis tetap)                 |
-
----
-
-## Checklist Urutan Pengerjaan
-
-```
-[ ] 1. Update schema.prisma (provider + model changes)
-[ ] 2. Update .env (ganti DATABASE_URL ke PostgreSQL)
-[ ] 3. Update docker-compose.yml (tambah postgres service)
-[ ] 4. Hapus MONGODB_CONNECTION dari database.module.ts
-[ ] 5. Update main.ts (connect-mongo → connect-pg-simple)
-[ ] 6. Update package.json API (hapus mongoose/connect-mongo, tambah connect-pg-simple)
-[ ] 7. Periksa dan perbaiki service yang menggunakan field RiskAssessment (Hirac)
-[ ] 8. Jalankan: prisma migrate dev --name init
-[ ] 9. Buat seed.ts dan jalankan: bun run db:seed
-[ ] 10. Perbaiki test setup dan jalankan E2E tests
-```
-
----
+> [!IMPORTANT]
+>
+> 1. Di Prisma Schema, string file diset sebagai `String?`. Apakah Anda lebih prefer saya menyimpan full public URL `http://localhost:9000/safeflow-assets/...` utuh di dalamnya, atau URL terpisah (prefix dari frontend)? Karena default saya akan menyimpan string url secata penuh.
 
 ## Verification Plan
 
-### Database Migration
+### Automated Tests
 
-```bash
-cd packages/database
-bun prisma migrate dev --name init-postgresql
-bun run db:seed
-```
-
-### Build Check
-
-```bash
-cd apps/api
-bun run build
-```
-
-### E2E Tests
-
-```bash
-cd apps/api
-bun run test:e2e
-```
+- Menjalankan `bun run build` di dalam workspace API untuk memastikan tidak ada _error_ kompilasi (Type error terkait Prisma, Service, atau DTO).
 
 ### Manual Verification
 
-1. Start PostgreSQL (docker-compose up postgres redis)
-2. Start API: `bun run dev` di `apps/api`
-3. Test hit endpoint `/api/v1/auth/register` via Postman/curl
-4. Cek data masuk via Prisma Studio: `bun run studio` di `packages/database`
+- Menjalankan backend NestJS secara _local_ (`bun run dev`).
+- Menguji API `POST /vendor` dan menyertakan data _form-data_ menggunakan Postman (file di `logo` form-data dan data DTO lainnya).
+- Melakukan verifikasi apakah folder `logo` di MinIO Dashboard (`localhost:9000`) berhasil terbuat dan isi file terbaca dengan baik.
+- Memanggil API `GET /vendor` untuk memvalidasi property `vendorLogo` sudah menghasilkan string URL gambar sesuai struktur.

@@ -83,6 +83,14 @@ model User {
 
   jsaVersionsApproved JsaVersionApproval[] @relation("JsaProjectVersionApprovalReviewer")
 
+  workerVendorsCreated WorkerVendor[] @relation("WorkerVendorCreatedBy")
+  workerVendorsUpdated WorkerVendor[] @relation("WorkerVendorUpdatedBy")
+  workerVendorsDeleted WorkerVendor[] @relation("WorkerVendorDeletedBy")
+
+  vendorsCreated Vendor[] @relation("VendorCreatedBy")
+  vendorsUpdated Vendor[] @relation("VendorUpdatedBy")
+  vendorsDeleted Vendor[] @relation("VendorDeletedBy")
+
   @@map("users")
 }
 
@@ -760,8 +768,18 @@ model Vendor {
   vendorLogo String?
   vendorDescription String?
   vendorStatus VendorStatus @default(ACTIVE)
-  vendorCreatedAt DateTime @default(now())
-  vendorUpdatedAt DateTime @updatedAt
+
+  createdBy String
+  updatedBy String
+  deletedBy String?
+
+  createdByUser User? @relation("VendorCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("VendorUpdatedBy", fields: [updatedBy], references: [id])
+  deletedByUser User? @relation("VendorDeletedBy", fields: [deletedBy], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 
   // ─── Worker Vendor ───────────────────────────────────────
   workerVendor WorkerVendor[]
@@ -778,18 +796,25 @@ model Vendor {
 model WorkerVendor {
   id String @id @default(cuid())
 
-  workerName String
-  workerAddress String
-  workerPhone String
-  workerStatus String
-  workerCreatedAt DateTime @default(now())
-  workerUpdatedAt DateTime @updatedAt
+  name String
+  address String
+  phone String
+  status String
 
   vendorId String
   vendor   Vendor   @relation(fields: [vendorId], references: [id])
 
+  createdBy String
+  updatedBy String
+  deletedBy String?
+
+  createdByUser User? @relation("WorkerVendorCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("WorkerVendorUpdatedBy", fields: [updatedBy], references: [id])
+  deletedByUser User? @relation("WorkerVendorDeletedBy", fields: [deletedBy], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 
   @@map("worker_vendors")
   @@index([vendorId])

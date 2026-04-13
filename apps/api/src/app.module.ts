@@ -23,6 +23,9 @@ import { InvitationsModule } from './invitations/invitations.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ProjectsModule } from './hse/projects/projects.module';
 import { HiracModule } from './hse/hirac/hirac.module';
+import { VendorModule } from './hse/vendor/vendor.module';
+import { AppStorageModule } from './common/minio/minio.module';
+import { WorkerVendorModule } from './hse/worker-vendor/worker-vendor.module';
 
 @Module({
   imports: [
@@ -82,6 +85,9 @@ import { HiracModule } from './hse/hirac/hirac.module';
     NotificationsModule,
     ProjectsModule,
     HiracModule,
+    VendorModule,
+    AppStorageModule,
+    WorkerVendorModule,
   ],
 })
 export class AppModule {}

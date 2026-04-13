@@ -3,7 +3,6 @@ const nextConfig = {
   allowedDevOrigins: ['http://localhost:3000'],
   transpilePackages: ['@repo/ui', '@repo/api', '@repo/validation'],
   output: 'standalone',
-  reactCompiler: true,
 };
 
 export default nextConfig;
