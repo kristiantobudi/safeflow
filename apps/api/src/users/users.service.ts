@@ -8,6 +8,7 @@ import * as bcrypt from 'bcryptjs';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from '../common/redis/redis.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { MinioService } from 'src/common/minio/minio.service';
 
 @Injectable()
 export class UsersService {
@@ -16,6 +17,7 @@ export class UsersService {
     private readonly auditLogService: AuditLogService,
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
+    private readonly minioService: MinioService,
   ) {}
 
   async create(data: {
@@ -33,6 +35,14 @@ export class UsersService {
     role?: any;
   }) {
     const user = await this.prisma.user.create({ data });
+
+    await this.auditLogService.log({
+      action: 'USER_CREATED',
+      entity: 'User',
+      entityId: user.id,
+      newValue: user,
+    });
+
     await this.redisService.delByPattern('users:list:*');
     return user;
   }
@@ -199,13 +209,28 @@ export class UsersService {
       username: string;
       email: string;
       password: string;
+      avatarUrl: string;
     }>,
+    file?: Express.Multer.File,
   ) {
     const user = await this.findById(userId);
     if (!user) throw new NotFoundException('User not found');
+
+    let avatarKey = data.avatarUrl || user.avatarUrl;
+
+    if (file) {
+      if (user.avatarUrl) {
+        await this.minioService.deleteFile(user.avatarUrl);
+      }
+      avatarKey = await this.minioService.uploadFile(file, 'users');
+    }
+
     const result = await this.prisma.user.update({
       where: { id: userId },
-      data: data,
+      data: {
+        ...data,
+        avatarUrl: avatarKey,
+      },
       select: {
         id: true,
         firstName: true,
@@ -223,6 +248,9 @@ export class UsersService {
         updatedAt: true,
       },
     });
+
+    result.avatarUrl = await this.minioService.getFileUrl(result.avatarUrl);
+
     await this.redisService.delByPattern('users:list:*');
     return result;
   }

@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
-import { VendorService } from './vendor.service';
+import { WorkerVendorService } from './worker-vendor.service';
+import { WorkerVendorController } from './worker-vendor.controller';
 import { DatabaseModule } from '../../database/database.module';
 import { AuditLogModule } from '../../audit-log/audit-log.module';
 import { AppRedisModule } from '../../common/redis/redis.module';
-import { VendorController } from './vendor.controller';
 
 @Module({
   imports: [DatabaseModule, AuditLogModule, AppRedisModule],
-  controllers: [VendorController],
-  providers: [VendorService],
-  exports: [VendorService],
+  controllers: [WorkerVendorController],
+  providers: [WorkerVendorService],
+  exports: [WorkerVendorService],
 })
-export class VendorModule {}
+export class WorkerVendorModule {}

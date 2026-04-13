@@ -1,20 +1,20 @@
 import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
-export class CreateVendorDto {
+export class UpdateVendorDto {
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   vendorName!: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   vendorAddress!: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   vendorPhone!: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   vendorEmail!: string;
 
   @IsString()
