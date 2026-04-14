@@ -7,7 +7,7 @@ import {
 } from '@/lib/services/auth-services';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
-import { deleteCookie } from 'cookies-next';
+import { deleteCookie, setCookie } from 'cookies-next';
 import { useRouter } from 'next/navigation';
 import { CSSProperties } from 'react';
 import { toast } from 'sonner';
@@ -22,11 +22,16 @@ export default function useAuthMutation() {
       const authData = data.data;
 
       queryClient.setQueryData<AuthState>(['auth'], {
-        token: authData.token,
-        role: authData.role,
-        isUpt: authData.isUpt,
-        ultg: authData.ultg,
+        token: authData.accessToken,
+        id: authData.user.id,
+        role: authData.user.role,
+        name: authData.user.firstName + ' ' + (authData.user.lastName ?? ''),
+        email: authData.user.email,
+        avatarUrl: authData.user.avatarUrl,
       });
+
+      setCookie('userId', authData.user.id);
+      setCookie('token', authData.accessToken);
 
       toast('Login Success', {
         style: {
@@ -39,11 +44,11 @@ export default function useAuthMutation() {
         closeButton: true,
       });
 
-      if (authData.role === 'admin' || authData.role === 'superadmin') {
-        router.push('/dashboard');
-      } else {
-        router.push('/dashboard/');
-      }
+      // if (authData.role === 'admin' || authData.role === 'superadmin') {
+      //   router.push('/dashboard');
+      // } else {
+      //   router.push('/dashboard/');
+      // }
     },
     onError: (error: AxiosError<{ message: string }>) => {
       ErrorHandling.handle(error);
@@ -64,9 +69,10 @@ export default function useAuthMutation() {
         closeButton: true,
       });
       deleteCookie('token');
+      deleteCookie('userId');
       deleteCookie('email');
       deleteCookie('role');
-      router.push('/login');
+      router.push('/auth');
     },
     onError: (error: AxiosError<{ message: string }>) => {
       ErrorHandling.handle(error);

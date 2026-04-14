@@ -39,6 +39,8 @@ model User {
   googleEmail      String?
   avatarUrl        String?
   displayName      String?
+  phone            String?
+  address          String?
 
   // ─── Invitation ───────────────────────────────────────
   invitationToken      String?      // token invite yang dipakai saat register

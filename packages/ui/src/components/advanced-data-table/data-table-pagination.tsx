@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React from "react";
-import type { Table } from "@tanstack/react-table";
-import { ChevronsUpDown, ChevronDown } from "lucide-react";
-import { Button } from "../ui/button";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import type { Table } from '@tanstack/react-table';
+import { ChevronsUpDown, ChevronDown } from 'lucide-react';
+import { Button } from '../ui/button';
+import { cn } from '../../lib/utils';
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
@@ -52,7 +52,7 @@ export function DataTablePagination<TData>({
         <div className="text-sm text-muted-foreground">
           {totalDataCount && totalDataCount > 0
             ? `${start}-${end} of ${totalDataCount}`
-            : "0 of 0"}
+            : '0 of 0'}
         </div>
         <div className="flex items-center space-x-2">
           <Button
@@ -107,7 +107,7 @@ export function DataTablePagination<TData>({
 // Additional components needed for the DataTable
 const Select = React.forwardRef<
   HTMLSelectElement,
-  React.ComponentPropsWithoutRef<"select"> & {
+  React.ComponentPropsWithoutRef<'select'> & {
     onValueChange?: (value: string) => void;
   }
 >(({ onValueChange, ...props }, ref) => {
@@ -120,7 +120,7 @@ const Select = React.forwardRef<
     />
   );
 });
-Select.displayName = "Select";
+Select.displayName = 'Select';
 
 const SelectTrigger = React.forwardRef<
   HTMLDivElement,
@@ -129,21 +129,21 @@ const SelectTrigger = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "flex h-9 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+      'flex h-9 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
       className,
     )}
     {...props}
   />
 ));
-SelectTrigger.displayName = "SelectTrigger";
+SelectTrigger.displayName = 'SelectTrigger';
 
 const SelectValue = React.forwardRef<
   HTMLSpanElement,
   React.HTMLAttributes<HTMLSpanElement>
 >(({ className, ...props }, ref) => (
-  <span ref={ref} className={cn("block truncate", className)} {...props} />
+  <span ref={ref} className={cn('block truncate', className)} {...props} />
 ));
-SelectValue.displayName = "SelectValue";
+SelectValue.displayName = 'SelectValue';
 
 const SelectContent = React.forwardRef<
   HTMLDivElement,
@@ -152,13 +152,13 @@ const SelectContent = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "absolute z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-80",
+      'absolute z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-80',
       className,
     )}
     {...props}
   />
 ));
-SelectContent.displayName = "SelectContent";
+SelectContent.displayName = 'SelectContent';
 
 const SelectItem = React.forwardRef<
   HTMLDivElement,
@@ -167,10 +167,10 @@ const SelectItem = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      'relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className,
     )}
     {...props}
   />
 ));
-SelectItem.displayName = "SelectItem";
+SelectItem.displayName = 'SelectItem';

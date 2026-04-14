@@ -12,8 +12,24 @@ const buttonVariants = cva(
         default: 'bg-primary text-primary-foreground hover:bg-primary/90',
         destructive:
           'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40',
+        yellow:
+          'bg-yellow-500 text-white hover:bg-yellow-600 focus-visible:ring-yellow-500/20 dark:bg-yellow-500/60 dark:focus-visible:ring-yellow-500/40',
+        violet:
+          'bg-violet-500 text-white hover:bg-violet-600 focus-visible:ring-violet-500/20 dark:bg-violet-500/60 dark:focus-visible:ring-violet-500/40',
+        orange:
+          'bg-orange-500 text-white hover:bg-orange-600 focus-visible:ring-orange-500/20 dark:bg-orange-500/60 dark:focus-visible:ring-orange-500/40',
+        green:
+          'bg-green-500 text-white hover:bg-green-600 focus-visible:ring-green-500/20 dark:bg-green-500/60 dark:focus-visible:ring-green-500/40',
+        blue: 'bg-blue-500 text-white hover:bg-blue-600 focus-visible:ring-blue-500/20 dark:bg-blue-500/60 dark:focus-visible:ring-blue-500/40',
+        cyan: 'bg-cyan-500 text-white hover:bg-cyan-600 focus-visible:ring-cyan-500/20 dark:bg-cyan-500/60 dark:focus-visible:ring-cyan-500/40',
+        pink: 'bg-pink-500 text-white hover:bg-pink-600 focus-visible:ring-pink-500/20 dark:bg-pink-500/60 dark:focus-visible:ring-pink-500/40',
+        purple:
+          'bg-purple-500 text-white hover:bg-purple-600 focus-visible:ring-purple-500/20 dark:bg-purple-500/60 dark:focus-visible:ring-purple-500/40',
+        avocado:
+          'bg-avocado-500 text-white hover:bg-avocado-600 focus-visible:ring-avocado-500/20 dark:bg-avocado-500/60 dark:focus-visible:ring-avocado-500/40',
+        lime: 'bg-lime-500 text-white hover:bg-lime-600 focus-visible:ring-lime-500/20 dark:bg-lime-500/60 dark:focus-visible:ring-lime-500/40',
         outline:
-          'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50',
+          'border border-primary text-primary bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50',
         secondary:
           'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost:

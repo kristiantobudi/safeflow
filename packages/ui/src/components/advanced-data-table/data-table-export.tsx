@@ -6,26 +6,17 @@ import {
   FileJson,
   Printer,
   ChevronDown,
-} from "lucide-react";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+} from 'lucide-react';
 
-// Extend jsPDF type to include autoTable
-declare module "jspdf" {
-  interface jsPDF {
-    autoTable: typeof autoTable;
-  }
-}
-import * as XLSX from "xlsx";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { Button } from "../ui/button";
-import { useDataTable } from "./data-table-context";
+} from '../ui/dropdown-menu';
+import { Button } from '../ui/button';
+import { useDataTable } from './data-table-context';
 
 export function DataTableExport() {
   const { table, exportFilename, tableContainerRef } = useDataTable();
@@ -48,41 +39,42 @@ export function DataTableExport() {
         const cell = row
           .getAllCells()
           .find((cell) => cell.column.id === column.id);
-        if (!cell) return "";
+        if (!cell) return '';
 
         // Try to get plain text value
         const value = cell.getValue();
         if (
-          typeof value === "string" ||
-          typeof value === "number" ||
-          typeof value === "boolean"
+          typeof value === 'string' ||
+          typeof value === 'number' ||
+          typeof value === 'boolean'
         ) {
           return value;
         }
 
         // Fallback to rendered content
-        return cell.renderValue() || "";
+        return cell.renderValue() || '';
       });
     });
 
     // Combine headers and rows
     const csvContent = [
-      headers.join(","),
-      ...rows.map((row) => row.join(",")),
-    ].join("\n");
+      headers.join(','),
+      ...rows.map((row) => row.join(',')),
+    ].join('\n');
 
     // Create and download file
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `${exportFilename}.csv`);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${exportFilename}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
+    const XLSX = await import('xlsx');
     // Get visible columns
     const visibleColumns = table
       .getAllColumns()
@@ -99,34 +91,37 @@ export function DataTableExport() {
         const cell = row
           .getAllCells()
           .find((cell) => cell.column.id === column.id);
-        if (!cell) return "";
+        if (!cell) return '';
 
         // Try to get plain text value
         const value = cell.getValue();
         if (
-          typeof value === "string" ||
-          typeof value === "number" ||
-          typeof value === "boolean"
+          typeof value === 'string' ||
+          typeof value === 'number' ||
+          typeof value === 'boolean'
         ) {
           return value;
         }
 
         // Fallback to rendered content
-        return cell.renderValue() || "";
+        return cell.renderValue() || '';
       });
     });
 
     // Create worksheet
     const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
 
     // Generate Excel file and download
     XLSX.writeFile(workbook, `${exportFilename}.xlsx`);
   };
 
-  const exportToPDF = () => {
-    const doc = new jsPDF();
+  const exportToPDF = async () => {
+    const { jsPDF } = await import('jspdf');
+    await import('jspdf-autotable');
+    
+    const doc = new jsPDF() as any;
 
     // Get visible columns
     const visibleColumns = table
@@ -144,20 +139,20 @@ export function DataTableExport() {
         const cell = row
           .getAllCells()
           .find((cell) => cell.column.id === column.id);
-        if (!cell) return "";
+        if (!cell) return '';
 
         // Try to get plain text value
         const value = cell.getValue();
         if (
-          typeof value === "string" ||
-          typeof value === "number" ||
-          typeof value === "boolean"
+          typeof value === 'string' ||
+          typeof value === 'number' ||
+          typeof value === 'boolean'
         ) {
           return value;
         }
 
         // Fallback to rendered content
-        return cell.renderValue() || "";
+        return cell.renderValue() || '';
       });
     });
 
@@ -165,7 +160,7 @@ export function DataTableExport() {
       head: [headers],
       body: rows,
       startY: 15,
-      theme: "grid",
+      theme: 'grid',
       styles: {
         fontSize: 8,
         cellPadding: 2,
@@ -173,7 +168,7 @@ export function DataTableExport() {
       headStyles: {
         fillColor: [45, 55, 60],
         textColor: [255, 255, 255],
-        fontStyle: "bold",
+        fontStyle: 'bold',
       },
       alternateRowStyles: {
         fillColor: [245, 245, 245],
@@ -210,12 +205,12 @@ export function DataTableExport() {
 
     // Create and download file
     const blob = new Blob([JSON.stringify(jsonData, null, 2)], {
-      type: "application/json",
+      type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `${exportFilename}.json`);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${exportFilename}.json`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -224,7 +219,7 @@ export function DataTableExport() {
   const printTable = () => {
     if (!tableContainerRef.current) return;
 
-    const printWindow = window.open("", "_blank");
+    const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
     const tableHTML = tableContainerRef.current.innerHTML;

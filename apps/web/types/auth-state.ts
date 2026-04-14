@@ -1,6 +1,8 @@
 export type AuthState = {
   token: string;
-  role: "admin" | "superadmin" | "unit" | "user";
-  isUpt: boolean;
-  ultg: string | null;
+  id: string;
+  role: 'ADMIN' | 'UNIT' | 'USER' | 'admin' | 'superadmin' | 'unit' | 'user';
+  email: string;
+  avatarUrl: string;
+  name: string;
 };

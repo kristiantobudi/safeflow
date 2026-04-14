@@ -21,6 +21,7 @@ import { MailService } from '../mail/mail.service';
 import { InvitationsService } from '../invitations/invitations.service';
 import { AuthProvider } from '@repo/database';
 import { parseExcelRegisterUser } from '../utils/excel.parser';
+import { MinioService } from '../common/minio/minio.service';
 
 interface GoogleUserDto {
   googleId: string;
@@ -41,6 +42,7 @@ export class AuthService {
     private readonly mailService: MailService,
     private readonly invitationService: InvitationsService,
     private readonly redisService: RedisService,
+    private readonly minioService: MinioService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
   ) {}
@@ -50,8 +52,17 @@ export class AuthService {
     ipAddress?: string,
     userAgent?: string,
   ) {
-    const { firstName, lastName, email, username, password, invitationToken } =
-      registerDto;
+    const {
+      firstName,
+      lastName,
+      email,
+      username,
+      password,
+      invitationToken,
+      phone,
+      address,
+      vendorId,
+    } = registerDto;
 
     let invitationData: any = null;
     if (invitationToken) {
@@ -101,6 +112,9 @@ export class AuthService {
       email,
       username,
       password: hashedPassword,
+      phone,
+      address,
+      vendorId,
       isEmailVerified: true,
       authProvider: AuthProvider.LOCAL,
       ...(invitationData && {
@@ -157,8 +171,6 @@ export class AuthService {
       'AuthService',
     );
 
-    this.logger.log(`User registered (LOCAL): ${email}`, 'AuthService');
-
     const { password: _, refreshToken: __, ...userWithoutSensitive } = user;
     return { user: userWithoutSensitive, ...tokens };
   }
@@ -177,22 +189,30 @@ export class AuthService {
         ipAddress: ipAddress,
         userAgent: userAgent,
         status: 'FAILURE',
-        metadata: { reason: 'File is missing' },
+        metadata: { reason: 'File is required' },
       });
       throw new BadRequestException('File is required');
+    } else {
+      await this.minioService.uploadFile(file, 'register-user');
     }
 
-    const rawUsers = parseExcelRegisterUser(file.path);
-
+    const rawUsers = parseExcelRegisterUser(file.buffer);
     const bcryptedSaltRounds = Number(
       this.configService.get<number>('BCRYPT_SALT_ROUNDS', 12),
     );
 
+    // Fetch all vendors to map names to IDs
+    const vendors = await this.usersService.findVendors();
+    const vendorMap = new Map(
+      vendors.map((v) => [v.vendorName.toLowerCase(), v.id]),
+    );
+
     const emails = rawUsers.map((u) => u.email);
-    const usernames = rawUsers.map((u) => u.username);
+    // Generate potential usernames from email prefixes
+    const potentialUsernames = rawUsers.map((u) => u.email.split('@')[0]);
 
     const existingUsers = await this.usersService.findUsernameOrEmailExisting(
-      usernames,
+      potentialUsernames,
       emails,
     );
 
@@ -208,6 +228,12 @@ export class AuthService {
       email: string;
       username: string;
       password: string;
+      phone?: string;
+      address?: string;
+      vendorId?: string;
+      role?: any;
+      isVerified?: boolean;
+      isEmailVerified?: boolean;
     }> = [];
     const usersWithPlainPassword: Array<{
       firstName: string;
@@ -218,13 +244,25 @@ export class AuthService {
     const skipped: Array<{ user: any; reason: string }> = [];
 
     for (const user of rawUsers) {
-      const { firstName, lastName, email, username, password } = user;
+      const { firstName, lastName, email, password, role, phone, vendorName } =
+        user as any;
+
+      // Generasi username otomatis dari email jika tidak ada
+      const username = email.split('@')[0];
 
       // ❌ validasi basic
-      if (!firstName || !email || !username || !password) {
-        skipped.push({ user, reason: 'Invalid data' });
+      if (!firstName || !email || !password) {
+        skipped.push({
+          user,
+          reason: 'Missing required fields (First Name, Email, or Password)',
+        });
         continue;
       }
+
+      // Lookup VendorId by Name
+      const resolvedVendorId = vendorName
+        ? vendorMap.get(vendorName.toLowerCase())
+        : undefined;
 
       // ❌ duplicate dalam file
       if (seenEmails.has(email) || seenUsernames.has(username)) {
@@ -250,6 +288,11 @@ export class AuthService {
         email,
         username,
         password: hashedPassword,
+        phone,
+        vendorId: resolvedVendorId,
+        role: role,
+        isVerified: true,
+        isEmailVerified: true,
       });
       usersWithPlainPassword.push({
         firstName,
@@ -340,6 +383,8 @@ export class AuthService {
           );
         });
     });
+
+    await this.redisService.delByPattern('users:*');
 
     return {
       total: rawUsers.length,
@@ -511,7 +556,7 @@ export class AuthService {
 
     this.logger.log(`Google SSO login: ${user.email}`, 'AuthService');
     const { password: _, refreshToken: __, ...safeUser } = user;
-    return { user: safeUser, ...tokens };
+    return this.completeLogin(safeUser, req);
   }
 
   async login(user: any, req: any) {
@@ -543,7 +588,7 @@ export class AuthService {
     }
 
     // No 2FA — full login
-    return this.completeLogin(user, req);
+    return await this.completeLogin(user, req);
   }
 
   async loginWith2FA(pendingToken: string, otpCode: string, req: any) {
@@ -593,7 +638,7 @@ export class AuthService {
       }
     }
 
-    return this.completeLogin(user, req);
+    return await this.completeLogin(user, req);
   }
 
   private async completeLogin(user: any, req: any) {
@@ -614,12 +659,20 @@ export class AuthService {
     });
 
     this.logger.log(`User logged in: ${user.email}`, 'AuthService');
+
+    // Generate presigned URL for avatar
+    if (user.avatarUrl) {
+      user.avatarUrl = await this.minioService.getFileUrl(user.avatarUrl);
+    }
+
     const {
       password: _,
       refreshToken: __,
       twoFactorSecret: ___,
-      createdAt: ____,
+      createdAt: ______,
       updatedAt: _____,
+      invitationToken: ________,
+      invitedByEmail: ____,
       ...safe
     } = user;
     return { requires2FA: false, user: safe, ...tokens };
@@ -772,6 +825,33 @@ export class AuthService {
     );
 
     const { password: _, refreshToken: __, ...result } = activatedUser;
+    return result;
+  }
+
+  async deactivateUserByAdmin(userIdToDeactivate: string, adminRequester: any) {
+    if (adminRequester.role !== 'ADMIN') {
+      throw new ForbiddenException('Only admins can perform this action.');
+    }
+
+    const userToDeactivate =
+      await this.usersService.findById(userIdToDeactivate);
+    if (!userToDeactivate) {
+      throw new NotFoundException('User to deactivate not found.');
+    }
+
+    if (!userToDeactivate.isActive) {
+      throw new BadRequestException('User is already inactive.');
+    }
+
+    const deactivatedUser =
+      await this.usersService.deactivate(userIdToDeactivate);
+
+    this.logger.log(
+      `User ${deactivatedUser.email} deactivated by admin ${adminRequester.email}`,
+      'AuthService',
+    );
+
+    const { password: _, refreshToken: __, ...result } = deactivatedUser;
     return result;
   }
 }

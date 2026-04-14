@@ -40,6 +40,18 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   invitationToken?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @IsOptional()
+  @IsString()
+  vendorId?: string;
 }
 
 // Yup schema (for manual validation use)
@@ -61,4 +73,7 @@ export const registerSchema = Yup.object({
       'Password must contain uppercase, lowercase, number, and special character',
     )
     .required('Password is required'),
+  phone: Yup.string().optional(),
+  address: Yup.string().optional(),
+  vendorId: Yup.string().optional(),
 });

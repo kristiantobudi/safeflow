@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import type React from "react";
+import type React from 'react';
 
-import type { ColumnDef, Row } from "@tanstack/react-table";
+import type { ColumnDef, Row } from '@tanstack/react-table';
 import {
   ArrowDown,
   ArrowUp,
@@ -10,10 +10,10 @@ import {
   CheckIcon,
   CopyIcon,
   MoreHorizontal,
-} from "lucide-react";
-import { useState } from "react";
-import { Button } from "../ui/button";
-import { Checkbox } from "../ui/checkbox";
+} from 'lucide-react';
+import { useState } from 'react';
+import { Button } from '../ui/button';
+import { Checkbox } from '../ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,42 +21,42 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { Badge } from "../ui/badge";
+} from '../ui/dropdown-menu';
+import { Badge } from '../ui/badge';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../ui/tooltip";
+} from '../ui/tooltip';
 
 type CopyableCellProps = {
   value: string;
   variant?:
-    | "default"
-    | "secondary"
-    | "destructive"
-    | "outline"
-    | "yellow"
-    | "blue"
-    | "violet"
-    | "emerald";
+    | 'default'
+    | 'secondary'
+    | 'destructive'
+    | 'outline'
+    | 'yellow'
+    | 'blue'
+    | 'violet'
+    | 'emerald';
 };
 
-import type { Column } from "@tanstack/react-table";
+import type { Column } from '@tanstack/react-table';
 
-export function createSortableHeader<T>(label: string): ColumnDef<T>["header"] {
+export function createSortableHeader<T>(label: string): ColumnDef<T>['header'] {
   const SortableHeader = ({ column }: { column: Column<T, unknown> }) => {
     return (
       <Button
         variant="ghost"
         className="-ml-4 h-8 data-[state=open]:bg-muted hover:bg-muted-foreground/5 hover:text-foreground font-semibold text-foreground"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
         {label}
-        {column.getIsSorted() === "asc" ? (
+        {column.getIsSorted() === 'asc' ? (
           <ArrowUp className="ml-2 h-4 w-4" />
-        ) : column.getIsSorted() === "desc" ? (
+        ) : column.getIsSorted() === 'desc' ? (
           <ArrowDown className="ml-2 h-4 w-4" />
         ) : (
           <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />
@@ -73,12 +73,12 @@ export function createSortableHeader<T>(label: string): ColumnDef<T>["header"] {
 // Helper function to create a selection column
 export function createSelectionColumn<T>(): ColumnDef<T> {
   return {
-    id: "select",
+    id: 'select',
     header: ({ table }) => (
       <Checkbox
         checked={
           table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
+          (table.getIsSomePageRowsSelected() && 'indeterminate')
         }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
@@ -104,12 +104,12 @@ export function createActionsColumnCustoms<T>(
     onClick: (data: T) => void;
     icon?: React.ReactNode;
     popover?: (data: T) => React.ReactNode;
-    variant?: "outline" | "ghost" | "secondary" | "destructive";
+    variant?: 'outline' | 'ghost' | 'secondary' | 'destructive';
   }>,
 ): ColumnDef<T> {
   return {
-    id: "actions",
-    header: "Actions",
+    id: 'actions',
+    header: 'Actions',
     cell: ({ row }) => {
       const data = row.original;
 
@@ -119,7 +119,7 @@ export function createActionsColumnCustoms<T>(
             const {
               popover,
               onClick,
-              variant = "outline",
+              variant = 'outline',
               icon,
               label,
             } = action;
@@ -161,8 +161,8 @@ export function createActionsColumn<T>(
   }>,
 ): ColumnDef<T> {
   return {
-    id: "actions",
-    header: "Actions",
+    id: 'actions',
+    header: 'Actions',
     cell: ({ row }) => {
       const data = row.original;
 
@@ -174,7 +174,10 @@ export function createActionsColumn<T>(
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent
+            align="end"
+            className="border border-0.5 shadow-2xl"
+          >
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {actions.map((action, index) => {
@@ -234,7 +237,7 @@ export function createSelectionColumnNumber<T>(
   };
 }
 
-type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
+type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline';
 
 export function createBadgeColumn<T extends Record<string, unknown>>(
   header: string,
@@ -246,8 +249,8 @@ export function createBadgeColumn<T extends Record<string, unknown>>(
     header,
     cell: ({ row }: { row: Row<T> }) => {
       const raw = row.getValue(accessor as string);
-      const value = Array.isArray(raw) ? raw[0] : String(raw ?? "");
-      const variant = colorMap[value] || "default";
+      const value = Array.isArray(raw) ? raw[0] : String(raw ?? '');
+      const variant = colorMap[value] || 'default';
       return <Badge variant={variant}>{value}</Badge>;
     },
   };
@@ -265,14 +268,14 @@ export function createLocationColumnBadge<T>(
 
       const locationColorMap: Record<
         string,
-        "default" | "secondary" | "destructive"
+        'default' | 'secondary' | 'destructive'
       > = {
-        Packing: "default",
-        "Finish Good": "destructive",
-        "Quality Assurance": "secondary",
+        Packing: 'default',
+        'Finish Good': 'destructive',
+        'Quality Assurance': 'secondary',
       };
 
-      const variant = locationColorMap[location] || "default";
+      const variant = locationColorMap[location] || 'default';
 
       return (
         <Badge variant={variant} className="whitespace-nowrap">
@@ -286,7 +289,7 @@ export function createLocationColumnBadge<T>(
 export function createCopyableColumn<T>(
   header: string,
   accessor: keyof T,
-  variant?: CopyableCellProps["variant"],
+  variant?: CopyableCellProps['variant'],
 ): ColumnDef<T> {
   return {
     accessorKey: accessor as string,
@@ -306,7 +309,7 @@ export function createStatusColumn<T>(
     string,
     {
       label: string;
-      variant: "default" | "secondary" | "destructive" | "outline";
+      variant: 'default' | 'secondary' | 'destructive' | 'outline';
     }
   >,
 ): ColumnDef<T> {
@@ -317,7 +320,7 @@ export function createStatusColumn<T>(
       const value = row.getValue(accessor as string) as string;
       const status = statusConfig[value] || {
         label: value,
-        variant: "default",
+        variant: 'default',
       };
 
       return (
@@ -334,9 +337,9 @@ export function createDateColumn<T>(
   header: string,
   accessor: keyof T,
   format: Intl.DateTimeFormatOptions = {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
   },
 ): ColumnDef<T> {
   return {
@@ -368,7 +371,7 @@ export function createNumberColumn<T>(
     sortable?: boolean;
   } = {},
 ): ColumnDef<T> {
-  const { prefix = "", suffix, decimals = 0, sortable = false } = options;
+  const { prefix = '', suffix, decimals = 0, sortable = false } = options;
 
   return {
     accessorKey: accessor as string,
@@ -381,7 +384,7 @@ export function createNumberColumn<T>(
         decimals > 0 ? value.toFixed(decimals) : Math.round(value).toString();
 
       const resolvedSuffix =
-        typeof suffix === "function" ? suffix(row.original) : (suffix ?? "");
+        typeof suffix === 'function' ? suffix(row.original) : (suffix ?? '');
 
       return (
         <div className="text-right font-mono">
@@ -394,20 +397,20 @@ export function createNumberColumn<T>(
   };
 }
 
-export function CopyableCell({ value, variant = "yellow" }: CopyableCellProps) {
+export function CopyableCell({ value, variant = 'yellow' }: CopyableCellProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(value);
     } else {
-      const textarea = document.createElement("textarea");
+      const textarea = document.createElement('textarea');
       textarea.value = value;
-      textarea.style.position = "fixed";
-      textarea.style.left = "-9999px";
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
       document.body.appendChild(textarea);
       textarea.select();
-      document.execCommand("copy");
+      document.execCommand('copy');
       textarea.remove();
     }
 
@@ -421,7 +424,7 @@ export function CopyableCell({ value, variant = "yellow" }: CopyableCellProps) {
         <div className="flex items-center p-2 gap-1">
           <TooltipTrigger asChild>
             <Badge className="cursor-pointer" variant={variant}>
-              {String(value ?? "-")}
+              {String(value ?? '-')}
             </Badge>
           </TooltipTrigger>
 
@@ -429,7 +432,7 @@ export function CopyableCell({ value, variant = "yellow" }: CopyableCellProps) {
             onClick={handleCopy}
             className="flex items-center space-x-2 cursor-pointer"
           >
-            <span className="text-sm">{String(value ?? "-")}</span>
+            <span className="text-sm">{String(value ?? '-')}</span>
             {copied ? <CheckIcon size={16} /> : <CopyIcon size={16} />}
           </TooltipContent>
         </div>

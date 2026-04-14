@@ -1,4 +1,4 @@
-import { diskStorage } from 'multer';
+import { diskStorage, memoryStorage } from 'multer';
 
 export const multerConfigPdf = {
   storage: diskStorage({
@@ -19,10 +19,5 @@ export const multerConfigPdf = {
 };
 
 export const multerConfigExcel = {
-  storage: diskStorage({
-    destination: './uploads/exam',
-    filename: (req, file, cb) => {
-      cb(null, `${Date.now()}-${file.originalname}`);
-    },
-  }),
+  storage: memoryStorage(),
 };

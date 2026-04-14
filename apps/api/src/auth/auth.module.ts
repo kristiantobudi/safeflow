@@ -14,6 +14,7 @@ import { InvitationsModule } from '../invitations/invitations.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { MailModule } from '../mail/mail.module';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { AppStorageModule } from '../common/minio/minio.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { GoogleStrategy } from './strategies/google.strategy';
     InvitationsModule,
     NotificationsModule,
     MailModule,
+    AppStorageModule,
     PassportModule.register({ defaultStrategy: 'jwt', session: false }),
     JwtModule.registerAsync({
       global: true,

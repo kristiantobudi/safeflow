@@ -5,6 +5,9 @@ import { ReduxProvider } from '@/store/provider';
 import { ThemeTransition } from '@repo/ui/components/providers/theme-transition';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { ThemeProvider } from 'next-themes';
+import { SessionRestoration } from '@/components/providers/session-restoration';
+import { Toaster } from 'sonner';
+import { TooltipProvider } from '@repo/ui/components/ui/tooltip';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -32,9 +35,14 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground transition-colors duration-500`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <Toaster position="top-right" richColors closeButton />
           <ThemeTransition />
           <ReduxProvider>
-            <QueryProvider>{children}</QueryProvider>
+            <QueryProvider>
+              <TooltipProvider>
+                <SessionRestoration>{children}</SessionRestoration>
+              </TooltipProvider>
+            </QueryProvider>
           </ReduxProvider>
         </ThemeProvider>
       </body>
