@@ -432,7 +432,7 @@ model VersionApproval {
 
 model Hirac {
   id                               String             @id @default(cuid())
-  no                               Int?
+  no                               String?
   kegiatan                         String
   kategori                         ActivityCategory   // R, NR, E
   identifikasiBahaya               String
@@ -493,7 +493,7 @@ model HiracVersion {
   hirac            Hirac?          @relation(fields: [hiracId], references: [id])
 
   // ── Semua field Hirac di-snapshot di sini ──────────────────
-  no                               Int?
+  no                               String?
   kegiatan                         String
   kategori                         ActivityCategory
   identifikasiBahaya               String

@@ -6,6 +6,10 @@ import {
   Body,
   Param,
   UseGuards,
+  Get,
+  Res,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { HiracService } from './hirac.service';
 import { CreateHiracDto } from './dto/create-hirac.dto';
@@ -14,11 +18,40 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Role } from '@repo/database';
+import { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('projects/:projectId/hirac')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class HiracController {
   constructor(private readonly hiracService: HiracService) {}
+
+  @Get('template')
+  @Roles(Role.USER, Role.ADMIN)
+  async downloadTemplate(
+    @Param('projectId') projectId: string,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.hiracService.generateRegisterTemplate(projectId);
+    res.set({
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': 'attachment; filename="Template_HIRAC.xlsx"',
+      'Content-Length': buffer.length,
+    });
+    res.end(buffer);
+  }
+
+  @Post('upload')
+  @Roles(Role.USER, Role.ADMIN)
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadHirac(
+    @Param('projectId') projectId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.hiracService.bulkRegisterHirac(projectId, file, userId);
+  }
 
   @Post()
   @Roles(Role.USER, Role.ADMIN)

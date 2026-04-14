@@ -1,3 +1,5 @@
+'use client';
+
 import { AppSidebar } from '@/components/app-sidebar';
 import DigitalClock from '@repo/ui/components/digital-clock';
 import ToggleDarkMode from '@repo/ui/components/toggle-darkmode';

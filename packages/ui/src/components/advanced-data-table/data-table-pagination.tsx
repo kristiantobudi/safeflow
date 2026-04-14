@@ -19,8 +19,8 @@ export function DataTablePagination<TData>({
   setPageSizeState,
   totalDataCount,
 }: DataTablePaginationProps<TData>) {
-  const pageIndex = table.getState().pagination.pageIndex;
-  const pageSize = table.getState().pagination.pageSize;
+  const pageIndex = table.getState().pagination?.pageIndex ?? 0;
+  const pageSize = table.getState().pagination?.pageSize ?? 10;
 
   const start = pageIndex * pageSize + 1;
   const end = Math.min((pageIndex + 1) * pageSize, totalDataCount ?? 0);

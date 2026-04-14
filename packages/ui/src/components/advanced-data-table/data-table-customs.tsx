@@ -207,12 +207,12 @@ export function DataTableCustoms<TData, TValue>({
       grouping,
       globalFilter,
       columnOrder,
-      pagination: pagination
-        ? {
-            pageIndex: pagination.pageIndex,
-            pageSize: pagination.pageSize,
-          }
-        : undefined,
+      ...(pagination && {
+        pagination: {
+          pageIndex: pagination.pageIndex,
+          pageSize: pagination.pageSize,
+        },
+      }),
     },
     initialState: {
       pagination: pagination

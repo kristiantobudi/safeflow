@@ -97,11 +97,7 @@ const moduleMenus = {
       icon: LayoutDashboard,
       isActive: true,
     },
-    {
-      title: 'Worker Management',
-      url: '/hse/worker-management',
-      icon: HardHat,
-    },
+
     {
       title: 'Safety Projects',
       url: '/hse/projects',
@@ -116,6 +112,11 @@ const moduleMenus = {
       title: 'HIRA / JSA',
       url: '/hse/hirac',
       icon: ShieldCheck,
+    },
+    {
+      title: 'Worker Management',
+      url: '/hse/worker-management',
+      icon: HardHat,
     },
   ],
   training: [
