@@ -15,8 +15,8 @@ export class RiskAssessmentDto {
 
 export class CreateHiracDto {
   @IsOptional()
-  @IsInt()
-  no?: number;
+  @IsString()
+  no?: string;
 
   @IsString()
   @IsNotEmpty()

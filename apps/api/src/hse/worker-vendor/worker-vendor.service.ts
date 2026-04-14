@@ -21,6 +21,13 @@ export class WorkerVendorService {
     private readonly minioService: MinioService,
   ) {}
 
+  async findVendors() {
+    return this.prisma.vendor.findMany({
+      where: { vendorStatus: 'ACTIVE' },
+      select: { id: true, vendorName: true },
+    });
+  }
+
   async addWorkerVendor(data: CreateWorkerVendorDto, userId: string) {
     const workerVendor = await this.prisma.workerVendor.create({
       data: {
@@ -97,8 +104,8 @@ export class WorkerVendorService {
     return workerVendor;
   }
 
-  async findAll(page = 1, limit = 10) {
-    const cacheKey = `worker-vendors:${page}:${limit}`;
+  async findAll(page = 1, limit = 10, search?: string) {
+    const cacheKey = `worker-vendors:${page}:${limit}:search:${search || ''}`;
     const cached = await this.redisService.get(cacheKey);
 
     if (cached) {
@@ -106,13 +113,27 @@ export class WorkerVendorService {
     }
 
     const skip = (page - 1) * limit;
-    const [workerVendors, total] = await Promise.all([
+
+    const where: any = {
+      deletedAt: null,
+    };
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        {
+          vendor: {
+            vendorName: { contains: search, mode: 'insensitive' },
+          },
+        },
+      ];
+    }
+
+    const [workerVendors, total, stats] = await Promise.all([
       this.prisma.workerVendor.findMany({
         skip,
         take: limit,
-        where: {
-          deletedAt: null,
-        },
+        where,
         include: {
           createdByUser: {
             select: {
@@ -131,18 +152,30 @@ export class WorkerVendorService {
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.workerVendor.count({
-        where: { deletedAt: null },
+        where,
+      }),
+      this.prisma.workerVendor.count({ where: { deletedAt: null } }).then(async (total) => {
+        const uniqueVendors = await this.prisma.workerVendor.groupBy({
+          by: ['vendorId'],
+          where: { deletedAt: null },
+        });
+        return {
+          total,
+          active: await this.prisma.workerVendor.count({
+            where: { status: 'ACTIVE', deletedAt: null },
+          }),
+          vendorsCount: uniqueVendors.length,
+        };
       }),
     ]);
 
     const result = {
-      data: workerVendors,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      workerVendors,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      stats,
     };
 
     await this.redisService.set(cacheKey, result, 60 * 60 * 24);

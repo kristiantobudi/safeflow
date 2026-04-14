@@ -143,21 +143,30 @@ export class VendorService {
   /**
    * Mengambil semua vendor dan men-generate Presigned URL untuk logo masing-masing
    */
-  async findAll(page = 1, limit = 10) {
-    const cacheKey = `vendors:${page}:${limit}`;
+  async findAll(page = 1, limit = 10, search?: string) {
+    const cacheKey = `vendors:${page}:${limit}:search:${search || ''}`;
     const cached = await this.redisService.get(cacheKey);
     if (cached) {
       return cached;
     }
 
     const skip = (page - 1) * limit;
-    const [vendorsRaw, total] = await Promise.all([
+
+    const where: any = {};
+    if (search) {
+      where.OR = [
+        { vendorName: { contains: search, mode: 'insensitive' } },
+        { vendorAddress: { contains: search, mode: 'insensitive' } },
+        { vendorPhone: { contains: search, mode: 'insensitive' } },
+        { vendorEmail: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [vendorsRaw, total, stats] = await Promise.all([
       this.prisma.vendor.findMany({
         skip,
         take: limit,
-        where: {
-          deletedAt: null,
-        },
+        where,
         include: {
           createdByUser: {
             select: {
@@ -170,7 +179,15 @@ export class VendorService {
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.vendor.count({
-        where: { deletedAt: null },
+        where,
+      }),
+      this.prisma.vendor.count({ where: { deletedAt: null } }).then(async (total) => {
+        return {
+          total,
+          active: await this.prisma.vendor.count({
+            where: { vendorStatus: 'ACTIVE', deletedAt: null },
+          }),
+        };
       }),
     ]);
 
@@ -192,6 +209,7 @@ export class VendorService {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+      stats,
     };
 
     await this.redisService.set(cacheKey, result, 60 * 60 * 24);

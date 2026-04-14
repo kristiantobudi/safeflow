@@ -56,8 +56,9 @@ export class VendorController {
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('search') search?: string,
   ) {
-    return this.vendorService.findAll(page, limit);
+    return this.vendorService.findAll(page, limit, search);
   }
 
   @Get(':id')

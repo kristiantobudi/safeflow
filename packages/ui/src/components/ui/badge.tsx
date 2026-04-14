@@ -14,10 +14,23 @@ const badgeVariants = cva(
           'bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90',
         destructive:
           'bg-destructive text-white focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 [a&]:hover:bg-destructive/90',
+        yellow:
+          'bg-yellow-500 text-white focus-visible:ring-yellow-500/20 dark:bg-yellow-500/60 dark:focus-visible:ring-yellow-500/40 [a&]:hover:bg-yellow-500/90',
+        blue: 'bg-blue-500 text-white focus-visible:ring-blue-500/20 dark:bg-blue-500/60 dark:focus-visible:ring-blue-500/40 [a&]:hover:bg-blue-500/90',
+        violet:
+          'bg-violet-500 text-white focus-visible:ring-violet-500/20 dark:bg-violet-500/60 dark:focus-visible:ring-violet-500/40 [a&]:hover:bg-violet-500/90',
+        emerald:
+          'bg-emerald-500 text-white focus-visible:ring-emerald-500/20 dark:bg-emerald-500/60 dark:focus-visible:ring-emerald-500/40 [a&]:hover:bg-emerald-500/90',
         outline:
           'border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
         ghost: '[a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 [a&]:hover:underline',
+        'role-admin': 'badge-role-admin',
+        'role-regular': 'badge-role-regular',
+        'status-active': 'badge-status-active',
+        'status-inactive': 'badge-status-inactive',
+        'verify-true': 'badge-verify-true',
+        'verify-false': 'badge-verify-false',
       },
     },
     defaultVariants: {

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from 'react';
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -21,9 +21,9 @@ import {
   OnChangeFn,
   PaginationState,
   getPaginationRowModel,
-} from "@tanstack/react-table";
+} from '@tanstack/react-table';
 
-import { cn } from "@/lib/utils";
+import { cn } from '../../lib/utils';
 import {
   Table,
   TableBody,
@@ -31,10 +31,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import { DataTableContextProps, DataTableProvider } from "./data-table-context";
-import { DataTableToolbar } from "./data-table-toolbar";
-import { DataTablePagination } from "./data-table-pagination";
+} from '../ui/table';
+import { DataTableContextProps, DataTableProvider } from './data-table-context';
+import { DataTableToolbar } from './data-table-toolbar';
+import { DataTablePagination } from './data-table-pagination';
+import { Skeleton } from '../ui/skeleton';
 
 // declare module '@tanstack/react-table' {
 //   interface TableMeta {
@@ -90,22 +91,23 @@ export interface DataTableProps<TData, TValue> {
   }) => void;
   onDeleteView?: (viewId: string) => void;
   className?: string;
-  variant?: "default" | "minimal" | "card";
+  variant?: 'default' | 'minimal' | 'card';
   totalDataCount?: number;
+  onGlobalFilterChangeExternal?: (value: string) => void;
 }
 
 export function DataTableCustoms<TData, TValue>({
   columns,
   data,
   searchKey,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = 'Search...',
   showColumnToggle = true,
   showPagination = true,
   pageSize = 10,
   title,
   description,
   exportData = false,
-  exportFilename = "exported-data",
+  exportFilename = 'exported-data',
   enableGrouping = false,
   loading = false,
   fetching = false,
@@ -125,7 +127,8 @@ export function DataTableCustoms<TData, TValue>({
   onDeleteView,
   className,
   totalDataCount,
-  variant = "default",
+  variant = 'default',
+  onGlobalFilterChangeExternal,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -133,9 +136,9 @@ export function DataTableCustoms<TData, TValue>({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [grouping, setGrouping] = useState<GroupingState>([]);
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [globalFilter, setGlobalFilter] = useState('');
   const [pageSizeState, setPageSizeState] = useState(pageSize);
-  const [columnResizeMode] = useState<"onChange" | "onEnd">("onChange");
+  const [columnResizeMode] = useState<'onChange' | 'onEnd'>('onChange');
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [activeView, setActiveView] = useState<string | null>(null);
@@ -147,23 +150,28 @@ export function DataTableCustoms<TData, TValue>({
         columns.map((col) => {
           const id = col.id as string | undefined;
           const accessorKey =
-            "accessorKey" in col && typeof col.accessorKey === "string"
+            'accessorKey' in col && typeof col.accessorKey === 'string'
               ? col.accessorKey
               : undefined;
 
-          return id ?? accessorKey ?? "";
+          return id ?? accessorKey ?? '';
         }),
       );
     }
   }, [columns, columnOrder]);
+
+  useEffect(() => {
+    if (onGlobalFilterChangeExternal) {
+      onGlobalFilterChangeExternal(globalFilter);
+    }
+  }, [globalFilter, onGlobalFilterChangeExternal]);
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    manualPagination: false,
-    // manualPagination: !!pagination,
+    manualPagination: !!pagination,
     pageCount: pagination?.pageCount,
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
@@ -199,12 +207,12 @@ export function DataTableCustoms<TData, TValue>({
       grouping,
       globalFilter,
       columnOrder,
-      pagination: pagination
-        ? {
-            pageIndex: pagination.pageIndex,
-            pageSize: pagination.pageSize,
-          }
-        : undefined,
+      ...(pagination && {
+        pagination: {
+          pageIndex: pagination.pageIndex,
+          pageSize: pagination.pageSize,
+        },
+      }),
     },
     initialState: {
       pagination: pagination
@@ -219,7 +227,7 @@ export function DataTableCustoms<TData, TValue>({
   useEffect(() => {
     if (
       enableRowSelection &&
-      typeof onRowSelectionChangeExternal === "function"
+      typeof onRowSelectionChangeExternal === 'function'
     ) {
       const selected = table
         .getSelectedRowModel()
@@ -242,7 +250,7 @@ export function DataTableCustoms<TData, TValue>({
     setColumnFilters([]);
     setSorting([]);
     setGrouping([]);
-    setGlobalFilter("");
+    setGlobalFilter('');
     setActiveView(null);
     table.resetColumnVisibility();
     table.resetRowSelection();
@@ -289,7 +297,7 @@ export function DataTableCustoms<TData, TValue>({
 
   return (
     <DataTableProvider value={contextValue as DataTableContextProps}>
-      <div className={cn("space-y-4", className)}>
+      <div className={cn('space-y-4', className)}>
         {(title || description) && (
           <div className="mb-4">
             {title && (
@@ -307,11 +315,11 @@ export function DataTableCustoms<TData, TValue>({
 
         <div
           className={cn(
-            "rounded-md border overflow-hidden",
-            variant === "minimal"
-              ? "border-transparent"
-              : "border-muted-foreground/10",
-            variant === "card" && "bg-card",
+            'rounded-md border overflow-hidden',
+            variant === 'minimal'
+              ? 'border-transparent'
+              : 'border-muted-foreground/10',
+            variant === 'card' && 'bg-card',
           )}
           ref={tableContainerRef}
         >
@@ -322,23 +330,24 @@ export function DataTableCustoms<TData, TValue>({
                   <TableRow
                     key={headerGroup.id}
                     className={
-                      variant === "minimal"
-                        ? "border-b border-muted-foreground/10"
-                        : ""
+                      variant === 'minimal'
+                        ? 'border-b border-muted-foreground/10'
+                        : ''
                     }
                   >
                     {headerGroup.headers.map((header) => (
                       <TableHead
                         key={header.id}
                         className={cn(
-                          "whitespace-nowrap text-foreground font-semibold",
-                          variant === "minimal"
-                            ? "bg-transparent"
-                            : "bg-muted/30",
+                          'whitespace-nowrap text-foreground font-semibold',
+                          variant === 'minimal'
+                            ? 'bg-transparent'
+                            : 'bg-muted/30',
+                          (header.column.columnDef as any).headerClassName,
                         )}
                         style={{
                           width: header.getSize(),
-                          position: "relative",
+                          position: 'relative',
                         }}
                       >
                         {header.isPlaceholder
@@ -358,8 +367,11 @@ export function DataTableCustoms<TData, TValue>({
                   [...Array(pageSizeState)].map((_, i) => (
                     <TableRow key={`skeleton-${i}`}>
                       {columns.map((_, ci) => (
-                        <TableCell key={ci}>
-                          <div className="h-4 w-full bg-muted animate-pulse rounded"></div>
+                        <TableCell 
+                          key={ci}
+                          className={cn((columns[ci] as any).cellClassName)}
+                        >
+                          <Skeleton className="h-4 w-full" />
                         </TableCell>
                       ))}
                     </TableRow>
@@ -368,24 +380,25 @@ export function DataTableCustoms<TData, TValue>({
                   table.getRowModel().rows.map((row) => (
                     <React.Fragment key={row.id}>
                       <TableRow
-                        data-state={row.getIsSelected() && "selected"}
+                        data-state={row.getIsSelected() && 'selected'}
                         onClick={() => onRowClick && onRowClick(row)}
                         className={cn(
-                          onRowClick ? "cursor-pointer" : "",
-                          variant === "minimal"
-                            ? "hover:bg-muted/20"
-                            : "hover:bg-muted/50",
-                          variant === "minimal"
-                            ? "border-b border-muted-foreground/10"
-                            : "",
+                          onRowClick ? 'cursor-pointer' : '',
+                          variant === 'minimal'
+                            ? 'hover:bg-muted/20'
+                            : 'hover:bg-muted/50',
+                          variant === 'minimal'
+                            ? 'border-b border-muted-foreground/10'
+                            : '',
                         )}
                       >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell
                             key={cell.id}
                             className={cn(
-                              "py-3",
-                              variant === "minimal" && "border-0",
+                              'py-3',
+                              variant === 'minimal' && 'border-0',
+                              (cell.column.columnDef as any).cellClassName,
                             )}
                           >
                             {flexRender(
@@ -400,9 +413,9 @@ export function DataTableCustoms<TData, TValue>({
                       {row.getIsExpanded() && renderRowSubComponent && (
                         <TableRow
                           className={
-                            variant === "minimal"
-                              ? "border-b border-muted-foreground/10"
-                              : ""
+                            variant === 'minimal'
+                              ? 'border-b border-muted-foreground/10'
+                              : ''
                           }
                         >
                           <TableCell
@@ -420,9 +433,9 @@ export function DataTableCustoms<TData, TValue>({
                       {row.getIsExpanded() && renderDetailPanel && (
                         <TableRow
                           className={
-                            variant === "minimal"
-                              ? "border-b border-muted-foreground/10"
-                              : ""
+                            variant === 'minimal'
+                              ? 'border-b border-muted-foreground/10'
+                              : ''
                           }
                         >
                           <TableCell
@@ -442,8 +455,8 @@ export function DataTableCustoms<TData, TValue>({
                     <TableCell
                       colSpan={columns.length}
                       className={cn(
-                        "h-24 text-center text-muted-foreground",
-                        variant === "minimal" && "border-0",
+                        'h-24 text-center text-muted-foreground',
+                        variant === 'minimal' && 'border-0',
                       )}
                     >
                       No results found.

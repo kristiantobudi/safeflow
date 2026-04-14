@@ -39,6 +39,8 @@ model User {
   googleEmail      String?
   avatarUrl        String?
   displayName      String?
+  phone            String?
+  address          String?
 
   // ─── Invitation ───────────────────────────────────────
   invitationToken      String?      // token invite yang dipakai saat register
@@ -430,7 +432,7 @@ model VersionApproval {
 
 model Hirac {
   id                               String             @id @default(cuid())
-  no                               Int?
+  no                               String?
   kegiatan                         String
   kategori                         ActivityCategory   // R, NR, E
   identifikasiBahaya               String
@@ -491,7 +493,7 @@ model HiracVersion {
   hirac            Hirac?          @relation(fields: [hiracId], references: [id])
 
   // ── Semua field Hirac di-snapshot di sini ──────────────────
-  no                               Int?
+  no                               String?
   kegiatan                         String
   kategori                         ActivityCategory
   identifikasiBahaya               String

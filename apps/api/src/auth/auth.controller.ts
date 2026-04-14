@@ -30,7 +30,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { multerConfigExcel } from '../config/multer.config';
 import { UsersService } from '../users/users.service';
 import { GoogleAuthGuard } from '../common/guards/google-auth.guard';
-import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs';
 import 'multer';
 
 @Controller('auth')
@@ -78,27 +78,105 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Roles('ADMIN', 'EXAMINER')
   async getTemplateRegister(@Res() res: Response) {
-    const template = [
-      {
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com',
-        username: 'johndoe',
-        password: 'Password123!',
-      },
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Template');
+
+    // Title and Instructions
+    worksheet.mergeCells('A1:H1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = '📋 TEMPLATE BULK REGISTRASI USER';
+    titleCell.font = { bold: true, size: 14 };
+    titleCell.alignment = { horizontal: 'center' };
+
+    worksheet.mergeCells('A2:H2');
+    const instructionCell = worksheet.getCell('A2');
+    instructionCell.value =
+      'Isi data mulai baris ke-5 ▸ Kolom merah (*) = wajib diisi ▸ Jangan ubah baris header';
+    instructionCell.font = { italic: true, color: { argb: 'FF0000' } };
+    instructionCell.alignment = { horizontal: 'center' };
+
+    // Header at Row 4
+    const headerRow = worksheet.getRow(4);
+    const headers = [
+      'No',
+      'First Name *',
+      'Last Name',
+      'Email *',
+      'Password *',
+      'Role *',
+      'No. HP',
+      'Vendor',
     ];
+    headerRow.values = headers;
+    headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
+    headerRow.eachCell((cell, colNumber) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: {
+          argb: (headers[colNumber - 1] || '').toString().includes('*')
+            ? 'FF0000'
+            : '444444',
+        },
+      };
+      cell.alignment = { horizontal: 'center' };
+    });
 
-    const ws = XLSX.utils.json_to_sheet(template);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    // Formatting columns
+    worksheet.getColumn(2).width = 20; // First Name
+    worksheet.getColumn(3).width = 20; // Last Name
+    worksheet.getColumn(4).width = 30; // Email
+    worksheet.getColumn(5).width = 20; // Password
+    worksheet.getColumn(6).width = 15; // Role
+    worksheet.getColumn(7).width = 20; // No HP
+    worksheet.getColumn(8).width = 25; // Vendor
 
-    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    // Sample Data at Row 5
+    worksheet.addRow([
+      1,
+      'John',
+      'Doe',
+      'john.doe@example.com',
+      'Password123!',
+      'USER',
+      '08123456789',
+      'PT Sample',
+    ]);
+
+    // Fetch Vendors for Dropdown
+    const vendors = await this.usersService.findVendors();
+    const vendorNames = vendors.map((v) => v.vendorName);
+
+    // Add dropdowns for 100 rows starting from row 5
+    for (let i = 5; i <= 105; i++) {
+      // Role Dropdown
+      worksheet.getCell(`F${i}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: ['"USER,ADMIN,EXAMINER,VERIFICATOR"'],
+      };
+
+      // Vendor Dropdown
+      if (vendorNames.length > 0) {
+        worksheet.getCell(`H${i}`).dataValidation = {
+          type: 'list',
+          allowBlank: true,
+          formulae: [`"${vendorNames.join(',')}"`],
+        };
+      }
+    }
 
     res.setHeader(
       'Content-Disposition',
-      'attachment; filename=template-soal.xlsx',
+      'attachment; filename=template-register-user.xlsx',
     );
-    res.send(buffer);
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
   }
 
   @Public()
@@ -206,6 +284,20 @@ export class AuthController {
       adminRequester,
     );
     return { message: 'User verified successfully', data: user };
+  }
+
+  @Patch('deactivate/:id')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async deactivateUserByAdmin(
+    @Param('id') userIdToDeactivate: string,
+    @CurrentUser() adminRequester: any,
+  ) {
+    const user = await this.authService.deactivateUserByAdmin(
+      userIdToDeactivate,
+      adminRequester,
+    );
+    return { message: 'User deactivated successfully', data: user };
   }
 
   @Post('logout')

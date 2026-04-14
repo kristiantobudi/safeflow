@@ -164,7 +164,12 @@ function DataTableActiveFilters() {
       {/* COLUMN FILTERS */}{" "}
       {columnFilters.map((filter) => {
         const column = table.getColumn(filter.id);
-        const columnName = column?.columnDef.header as string;
+        const columnName =
+          column?.columnDef.meta && (column.columnDef.meta as any).label
+            ? (column.columnDef.meta as any).label
+            : typeof column?.columnDef.header === 'string'
+              ? column.columnDef.header
+              : column?.id;
         return (
           <Badge
             key={filter.id}
@@ -190,7 +195,12 @@ function DataTableActiveFilters() {
       {/* SORTING */}{" "}
       {sorting.map((sort) => {
         const column = table.getColumn(sort.id);
-        const columnName = column?.columnDef.header as string;
+        const columnName =
+          column?.columnDef.meta && (column.columnDef.meta as any).label
+            ? (column.columnDef.meta as any).label
+            : typeof column?.columnDef.header === 'string'
+              ? column.columnDef.header
+              : column?.id;
         return (
           <Badge
             key={sort.id}
@@ -218,7 +228,12 @@ function DataTableActiveFilters() {
       {/* GROUPING */}{" "}
       {grouping.map((group) => {
         const column = table.getColumn(group);
-        const columnName = column?.columnDef.header as string;
+        const columnName =
+          column?.columnDef.meta && (column.columnDef.meta as any).label
+            ? (column.columnDef.meta as any).label
+            : typeof column?.columnDef.header === 'string'
+              ? column.columnDef.header
+              : column?.id;
         return (
           <Badge
             key={group}

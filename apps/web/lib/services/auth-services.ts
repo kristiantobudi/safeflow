@@ -18,7 +18,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function loginUser({ email, password }: LoginProps) {
   const res = await axios.post(
-    `${API_URL}/auth/sign-in`,
+    `${API_URL}/auth/login`,
     { email, password },
     {
       headers: {
@@ -64,12 +64,29 @@ export async function registerUser({
 
 export async function logoutUser() {
   const res = await api.post(
-    `${API_URL}/auth/sign-out`,
+    `${API_URL}/auth/logout`,
     {},
     {
       withCredentials: true,
     },
   );
 
+  return res.data;
+}
+
+export async function refreshAccessToken(userId: string) {
+  const res = await axios.post(
+    `${API_URL}/auth/refresh`,
+    { userId },
+    {
+      withCredentials: true,
+    },
+  );
+
+  return res.data;
+}
+
+export async function getUserProfile() {
+  const res = await api.get(`${API_URL}/users/me`);
   return res.data;
 }

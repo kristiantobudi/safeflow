@@ -1,25 +1,27 @@
-import { IsString, IsNotEmpty, MinLength, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength, IsOptional, IsEnum } from 'class-validator';
+import { VendorStatus } from '@repo/database/generated/client';
 
 export class UpdateWorkerVendorDto {
   @IsString()
   @IsOptional()
   @MinLength(3, { message: 'Worker name must be at least 3 characters' })
-  workerName!: string;
+  name!: string;
 
   @IsString()
   @IsOptional()
   @MinLength(10, { message: 'Worker phone must be at least 10 characters' })
-  workerPhone!: string;
+  phone!: string;
 
   @IsString()
   @IsOptional()
-  workerAddress!: string;
+  address!: string;
 
   @IsString()
   @IsOptional()
-  workerStatus!: string;
+  @IsEnum(VendorStatus)
+  status!: VendorStatus;
 
   @IsString()
-  @IsNotEmpty({ message: 'Vendor ID is required' })
-  vendorId!: string;
+  @IsOptional()
+  vendorId?: string;
 }
