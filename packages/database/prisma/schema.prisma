@@ -15,75 +15,86 @@ datasource db {
 }
 
 model User {
-  id           String  @id @default(cuid())
-  firstName    String
-  lastName     String?
-  email        String  @unique
-  username     String  @unique
-  password     String
-  role         Role    @default(USER)
-  jobTitle     JobTitle @default(REQUESTER)
-  isActive     Boolean @default(false)
-  isVerified   Boolean @default(false)
-  isEmailVerified  Boolean    @default(false)
-  refreshToken String?
+  id              String   @id @default(cuid())
+  firstName       String
+  lastName        String?
+  email           String   @unique
+  username        String   @unique
+  password        String
+  role            Role     @default(USER)
+  jobTitle        JobTitle @default(REQUESTER)
+  isActive        Boolean  @default(false)
+  isVerified      Boolean  @default(false)
+  isEmailVerified Boolean  @default(false)
+  refreshToken    String?
 
   // ─── 2FA / OTP ─────────────────────────────────────────
   twoFactorEnabled     Boolean  @default(false)
   twoFactorSecret      String? // encrypted TOTP secret
   twoFactorBackupCodes String[] @default([]) // hashed backup codes
 
-    // ─── SSO / OAuth ──────────────────────────────────────
-  authProvider     AuthProvider @default(LOCAL)
-  googleId         String?   @unique  // Google sub ID
-  googleEmail      String?
-  avatarUrl        String?
-  displayName      String?
-  phone            String?
-  address          String?
+  // ─── SSO / OAuth ──────────────────────────────────────
+  authProvider AuthProvider @default(LOCAL)
+  googleId     String?      @unique // Google sub ID
+  googleEmail  String?
+  avatarUrl    String?
+  displayName  String?
+  phone        String?
+  address      String?
 
   // ─── Invitation ───────────────────────────────────────
-  invitationToken      String?      // token invite yang dipakai saat register
-  invitedByEmail       String?      // email admin yang mengundang
+  invitationToken String? // token invite yang dipakai saat register
+  invitedByEmail  String? // email admin yang mengundang
 
   // ─── Vendor ───────────────────────────────────────
   vendorId String?
-  vendor   Vendor?  @relation(fields: [vendorId], references: [id])
+  vendor   Vendor? @relation(fields: [vendorId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  auditLogs       AuditLog[]
-  notifications    Notification[]
-  sentInvitations      Invitation[] @relation("InvitedBy")
-  positions       Position[]
-  exams           Exam[]        @relation("ExamCreator")
-  examsModified   Exam[]        @relation("ExamModifier")
-  examDeleted     Exam[]        @relation("ExamDeleter")
-  certificates    Certificate[]
-  modules         Module[]      @relation("ModuleCreator")
-  modifiedModules Module[]      @relation("ModuleModifier")
-  deletedModules  Module[]      @relation("ModuleDeleter")
-  examAttempts    ExamAttempt[]
-  projects        Project[]     @relation("ProjectCreator")
-  projectsModified Project[]     @relation("ProjectModifier")
-  projectsDeleted Project[]     @relation("ProjectDeleter")
-  projectsApproved Project[]     @relation("ProjectApprovedBy")
-  projectsRejected Project[]     @relation("ProjectRejectedBy")
-  versions         ProjectVersion[] @relation("VersionReviewer")
-  versionsSubmitted ProjectVersion[] @relation("VersionSubmitter")
-  versionApproval VersionApproval[] @relation("ApprovalReviewer")
+  auditLogs         AuditLog[]
+  notifications     Notification[]
+  sentInvitations   Invitation[]      @relation("InvitedBy")
+  positions         Position[]
+  exams             Exam[]            @relation("ExamCreator")
+  examsModified     Exam[]            @relation("ExamModifier")
+  examDeleted       Exam[]            @relation("ExamDeleter")
+  certificates      Certificate[]
+  modules           Module[]          @relation("ModuleCreator")
+  modifiedModules   Module[]          @relation("ModuleModifier")
+  deletedModules    Module[]          @relation("ModuleDeleter")
+  examAttempts      ExamAttempt[]
+  projects          Project[]         @relation("ProjectCreator")
+  projectsModified  Project[]         @relation("ProjectModifier")
+  projectsDeleted   Project[]         @relation("ProjectDeleter")
+  projectsApproved  Project[]         @relation("ProjectApprovedBy")
+  projectsRejected  Project[]         @relation("ProjectRejectedBy")
+  versions          ProjectVersion[]  @relation("VersionReviewer")
+  versionsSubmitted ProjectVersion[]  @relation("VersionSubmitter")
+  versionApproval   VersionApproval[] @relation("ApprovalReviewer")
 
-  jsaProjectsCreated JsaProject[] @relation("JsaProjectCreatedBy")
+  jsaProjectsCreated  JsaProject[] @relation("JsaProjectCreatedBy")
   jsaProjectsModified JsaProject[] @relation("JsaProjectUpdatedBy")
-  jsaProjectsDeleted JsaProject[] @relation("JsaProjectDeletedBy")
+  jsaProjectsDeleted  JsaProject[] @relation("JsaProjectDeletedBy")
   jsaProjectsApproved JsaProject[] @relation("JsaProjectApprovedBy")
   jsaProjectsRejected JsaProject[] @relation("JsaProjectRejectedBy")
 
+  // ─── Vendor Certification ─────────────────────────────
+  certificationProgramsCreated CertificationProgram[] @relation("ProgramCreator")
+  certificationProgramsUpdated CertificationProgram[] @relation("ProgramUpdater")
+  certificationRevocations     VendorCertification[]  @relation("CertificationRevoker")
+
   jsaVersionsSubmitted JsaProjectVersion[] @relation("JsaProjectVersionSubmitter")
-  jsaVersionsReviewed JsaProjectVersion[] @relation("JsaProjectVersionReviewer")
+  jsaVersionsReviewed  JsaProjectVersion[] @relation("JsaProjectVersionReviewer")
 
   jsaVersionsApproved JsaVersionApproval[] @relation("JsaProjectVersionApprovalReviewer")
+
+  // ─── PTW ──────────────────────────────────────────────
+  ptwProjectsCreated  PtwProject[] @relation("PtwProjectCreatedBy")
+  ptwVersionsSubmitted PtwProjectVersion[] @relation("PtwProjectVersionSubmitter")
+  ptwVersionsReviewed  PtwProjectVersion[] @relation("PtwProjectVersionReviewer")
+  ptwVersionsApproved  PtwVersionApproval[] @relation("PtwVersionApprovalReviewer")
 
   workerVendorsCreated WorkerVendor[] @relation("WorkerVendorCreatedBy")
   workerVendorsUpdated WorkerVendor[] @relation("WorkerVendorUpdatedBy")
@@ -97,14 +108,14 @@ model User {
 }
 
 model Invitation {
-  id           String           @id @default(cuid())
-  email        String
-  token        String           @unique
-  role         Role             @default(USER)
-  status       InvitationStatus @default(PENDING)
+  id     String           @id @default(cuid())
+  email  String
+  token  String           @unique
+  role   Role             @default(USER)
+  status InvitationStatus @default(PENDING)
 
-  invitedById  String
-  invitedBy    User             @relation("InvitedBy", fields: [invitedById], references: [id])
+  invitedById String
+  invitedBy   User   @relation("InvitedBy", fields: [invitedById], references: [id])
 
   acceptedById String?
   acceptedAt   DateTime?
@@ -112,8 +123,8 @@ model Invitation {
   expiresAt    DateTime
   note         String?
 
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([email])
   @@index([status])
@@ -177,24 +188,24 @@ model Position {
 }
 
 model Exam {
-  id          String        @id @default(cuid())
-  moduleId    String?
-  module      Module?       @relation(fields: [moduleId], references: [id])
-  duration    Int
-  maxAttempts Int?
-  question    Question[]
-  attempts    ExamAttempt[]
-  isDeleted   Boolean       @default(false)
-  createdBy   String?
-  creator     User?         @relation("ExamCreator", fields: [createdBy], references: [id])
-  modifyBy    String?
-  modifier    User?         @relation("ExamModifier", fields: [modifyBy], references: [id])
-  deletedBy   String?
-  deleter     User?         @relation("ExamDeleter", fields: [deletedBy], references: [id])
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  deletedAt   DateTime?
-  certificates    Certificate[]
+  id           String        @id @default(cuid())
+  moduleId     String?
+  module       Module?       @relation(fields: [moduleId], references: [id])
+  duration     Int
+  maxAttempts  Int?
+  question     Question[]
+  attempts     ExamAttempt[]
+  isDeleted    Boolean       @default(false)
+  createdBy    String?
+  creator      User?         @relation("ExamCreator", fields: [createdBy], references: [id])
+  modifyBy     String?
+  modifier     User?         @relation("ExamModifier", fields: [modifyBy], references: [id])
+  deletedBy    String?
+  deleter      User?         @relation("ExamDeleter", fields: [deletedBy], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+  certificates Certificate[]
 
   @@index([createdBy])
   @@index([modifyBy])
@@ -212,7 +223,7 @@ model Question {
   isDeleted     Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
+  imageUrl      String?
   module        Module?   @relation(fields: [moduleId], references: [id])
   moduleId      String?
 
@@ -229,21 +240,21 @@ model ExamAttempt {
 
   questionIds String[] @default([])
 
-  startTime DateTime
-  endTime   DateTime
-  status    AttemptStatus @default(ONGOING)
-  score     Int?
-  isPassed  Boolean?
-  passedAt  DateTime?
+  startTime         DateTime
+  endTime           DateTime
+  status            AttemptStatus @default(ONGOING)
+  score             Int?
+  isPassed          Boolean?
+  passedAt          DateTime?
   totalQuestions    Int?
   answeredQuestions Int?
   correctQuestions  Int?
 
-  answers   Answer[]
-  certificates    Certificate[]
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  deletedAt DateTime?
+  answers      Answer[]
+  certificates Certificate[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
 
   @@index([examId])
   @@index([userId])
@@ -270,15 +281,15 @@ model Answer {
 }
 
 model Certificate {
-  id         String    @id @default(cuid())
-  userId     String?
-  user       User?     @relation(fields: [userId], references: [id])
-  moduleId   String?
-  module     Module?   @relation(fields: [moduleId], references: [id])
-  examId     String?
-  exam       Exam?     @relation(fields: [examId], references: [id])
-  attemptId  String?
-  attempt    ExamAttempt? @relation(fields: [attemptId], references: [id])
+  id        String       @id @default(cuid())
+  userId    String?
+  user      User?        @relation(fields: [userId], references: [id])
+  moduleId  String?
+  module    Module?      @relation(fields: [moduleId], references: [id])
+  examId    String?
+  exam      Exam?        @relation(fields: [examId], references: [id])
+  attemptId String?
+  attempt   ExamAttempt? @relation(fields: [attemptId], references: [id])
 
   certNumber String    @unique
   createdAt  DateTime  @default(now())
@@ -291,24 +302,25 @@ model Certificate {
 }
 
 model Module {
-  id          String    @id @default(cuid())
+  id          String       @id @default(cuid())
   createdBy   String?
-  creator     User?     @relation("ModuleCreator", fields: [createdBy], references: [id])
+  creator     User?        @relation("ModuleCreator", fields: [createdBy], references: [id])
   modifyBy    String?
-  modifier    User?     @relation("ModuleModifier", fields: [modifyBy], references: [id])
+  modifier    User?        @relation("ModuleModifier", fields: [modifyBy], references: [id])
   deletedBy   String?
-  deleter     User?     @relation("ModuleDeleter", fields: [deletedBy], references: [id])
-  title       String    @unique
+  deleter     User?        @relation("ModuleDeleter", fields: [deletedBy], references: [id])
+  title       String       @unique
   description String?
   files       ModuleFile[]
-  isDeleted   Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isDeleted   Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   deletedAt   DateTime?
 
-  certificate Certificate[]
-  exam        Exam[]
-  question    Question[]
+  certificate                 Certificate[]
+  exam                        Exam[]
+  question                    Question[]
+  certificationProgramModules CertificationProgramModule[]
 
   @@index([createdBy])
   @@index([modifyBy])
@@ -317,12 +329,12 @@ model Module {
 }
 
 model ModuleFile {
-  id        String   @id @default(cuid())
-  moduleId  String
-  module    Module   @relation(fields: [moduleId], references: [id])
+  id       String @id @default(cuid())
+  moduleId String
+  module   Module @relation(fields: [moduleId], references: [id])
 
-  filename  String
-  url       String
+  filename String
+  url      String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -332,75 +344,75 @@ model ModuleFile {
 }
 
 model Project {
-  id        String   @id @default(cuid())
+  id             String        @id @default(cuid())
   unitKerja      String
-  lokasiKerja String?
-  tanggal String?
+  lokasiKerja    String?
+  tanggal        String?
   revisiDocument Int?
   statusDocument String?
-  status ProjectStatus @default(DRAFT)
-  hiracs    Hirac[]
+  status         ProjectStatus @default(DRAFT)
+  hiracs         Hirac[]
 
   createdAt DateTime @default(now())
   createdBy String?
-  creator User? @relation("ProjectCreator", fields: [createdBy], references: [id])
-  modifyBy String?
-  modifier User? @relation("ProjectModifier", fields: [modifyBy], references: [id])
+  creator   User?    @relation("ProjectCreator", fields: [createdBy], references: [id])
+  modifyBy  String?
+  modifier  User?    @relation("ProjectModifier", fields: [modifyBy], references: [id])
   deletedBy String?
-  deleter User? @relation("ProjectDeleter", fields: [deletedBy], references: [id])
-  
+  deleter   User?    @relation("ProjectDeleter", fields: [deletedBy], references: [id])
+
   isDeleted Boolean @default(false)
-  
-  approvedBy String?
-  approvedUser User? @relation("ProjectApprovedBy", fields: [approvedBy], references: [id])
-  rejectedBy String?
-  rejectedUser User? @relation("ProjectRejectedBy", fields: [rejectedBy], references: [id])
-  
+
+  approvedBy   String?
+  approvedUser User?   @relation("ProjectApprovedBy", fields: [approvedBy], references: [id])
+  rejectedBy   String?
+  rejectedUser User?   @relation("ProjectRejectedBy", fields: [rejectedBy], references: [id])
+
   approvedAt DateTime?
   rejectedAt DateTime?
-  deletedAt DateTime?
-  updatedAt DateTime @updatedAt
+  deletedAt  DateTime?
+  updatedAt  DateTime  @updatedAt
 
   approvalStatus ProjectStatus @default(DRAFT)
 
-  versions          ProjectVersion[]   // ← tambah ini
-  currentVersionId  String?            // pointer ke versi aktif
+  versions         ProjectVersion[] // ← tambah ini
+  currentVersionId String? // pointer ke versi aktif
 
   @@index([createdBy])
   @@index([modifyBy])
   @@index([deletedBy])
-  @@map("projects")
   @@index([status])
   @@index([approvalStatus])
   @@index([unitKerja])
+  @@map("projects")
 }
 
 // version untuk project
 model ProjectVersion {
-  id            String        @id @default(cuid())
-  projectId     String
-  project       Project       @relation(fields: [projectId], references: [id])
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
 
-  versionNumber Int           // 1, 2, 3, dst
-  label         String?       // misal: "Revisi 1 - Perubahan APD"
-  changeNote    String?       // ringkasan perubahan dari versi sebelumnya
+  versionNumber Int // 1, 2, 3, dst
+  label         String? // misal: "Revisi 1 - Perubahan APD"
+  changeNote    String? // ringkasan perubahan dari versi sebelumnya
 
-  status        VersionStatus @default(DRAFT)
-  submittedBy   String?
-  submitter     User?         @relation("VersionSubmitter", fields: [submittedBy], references: [id])
-  submittedAt   DateTime?
+  status      VersionStatus @default(DRAFT)
+  submittedBy String?
+  submitter   User?         @relation("VersionSubmitter", fields: [submittedBy], references: [id])
+  submittedAt DateTime?
 
   // Siapa yang approve/reject versi ini
-  reviewedBy    String?
-  reviewer      User?         @relation("VersionReviewer", fields: [reviewedBy], references: [id])
-  reviewedAt    DateTime?
-  reviewNote    String?
+  reviewedBy String?
+  reviewer   User?     @relation("VersionReviewer", fields: [reviewedBy], references: [id])
+  reviewedAt DateTime?
+  reviewNote String?
 
   hiracs        HiracVersion[]
   approvalSteps VersionApproval[]
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([projectId, versionNumber])
   @@index([projectId])
@@ -410,120 +422,120 @@ model ProjectVersion {
 
 // version untuk approval project
 model VersionApproval {
-  id               String          @id @default(cuid())
+  id               String         @id @default(cuid())
   projectVersionId String
-  projectVersion   ProjectVersion  @relation(fields: [projectVersionId], references: [id])
+  projectVersion   ProjectVersion @relation(fields: [projectVersionId], references: [id])
 
-  stepOrder        Int
-  requiredRole     Role
-  status           ApprovalStatus  @default(PENDING)
+  stepOrder    Int
+  requiredRole Role
+  status       ApprovalStatus @default(PENDING)
 
-  approvedBy       String?
-  approver         User?           @relation("ApprovalReviewer", fields: [approvedBy], references: [id])
-  approvedAt       DateTime?
-  note             String?
+  approvedBy String?
+  approver   User?     @relation("ApprovalReviewer", fields: [approvedBy], references: [id])
+  approvedAt DateTime?
+  note       String?
 
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([projectVersionId])
   @@map("version_approvals")
 }
 
 model Hirac {
-  id                               String             @id @default(cuid())
-  no                               String?
-  kegiatan                         String
-  kategori                         ActivityCategory   // R, NR, E
-  identifikasiBahaya               String
-  akibatRisiko                     String
-  
+  id                 String           @id @default(cuid())
+  no                 String?
+  kegiatan           String
+  kategori           ActivityCategory // R, NR, E
+  identifikasiBahaya String
+  akibatRisiko       String
+
   // Penilaian Risiko Awal (Flattened RiskAssessment)
-  penilaianAwalAkibat              Int
-  penilaianAwalKemungkinan         String
-  penilaianAwalTingkatRisiko       RiskLevel
-  risikoDapatDiterimaAwal          Boolean            @default(false)
-  
-  peraturanTerkait                 String?
-  
+  penilaianAwalAkibat        Int
+  penilaianAwalKemungkinan   String
+  penilaianAwalTingkatRisiko RiskLevel
+  risikoDapatDiterimaAwal    Boolean   @default(false)
+
+  peraturanTerkait String?
+
   // Hirarki Pengendalian Risiko
-  pengendalian                     String
-  
+  pengendalian String
+
   // Penilaian Risiko Lanjutan (Flattened RiskAssessment)
-  penilaianLanjutanAkibat          Int
-  penilaianLanjutanKemungkinan     String
-  penilaianLanjutanTingkatRisiko   RiskLevel
-  risikoDapatDiterimaLanjutan      Boolean            @default(false)
-  
-  peluang                          String?
-  picId                            String?
-  status                           StatusControl      @default(OPEN)
+  penilaianLanjutanAkibat        Int
+  penilaianLanjutanKemungkinan   String
+  penilaianLanjutanTingkatRisiko RiskLevel
+  risikoDapatDiterimaLanjutan    Boolean   @default(false)
+
+  peluang String?
+  picId   String?
+  status  StatusControl @default(OPEN)
 
   versions    HiracVersion[]
   jsaProjects JsaProject[]
 
   // ─── Vendor ───────────────────────────────────────
-  vendors    Vendor[]
+  vendors Vendor[]
 
   // Tandai apakah baris ini masih aktif atau sudah superseded
-  isActive    Boolean   @default(true)
-  
+  isActive Boolean @default(true)
+
   // Metadata untuk Alur Digital (berdasarkan file SafeFlow/HSE Digital)
-  createdAt                        DateTime           @default(now())
-  updatedAt                        DateTime           @updatedAt
-  projectId                        String?
-  project                          Project?           @relation(fields: [projectId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
 
   @@index([projectId])
   @@index([isActive])
-  @@map("hiracs")
   @@index([status])
   @@index([kategori])
-  @@index([penilaianAwalTingkatRisiko]) 
+  @@index([penilaianAwalTingkatRisiko])
+  @@map("hiracs")
 }
 
 // version untuk hirac
 model HiracVersion {
-  id               String          @id @default(cuid())
+  id               String         @id @default(cuid())
   projectVersionId String
-  projectVersion   ProjectVersion  @relation(fields: [projectVersionId], references: [id])
+  projectVersion   ProjectVersion @relation(fields: [projectVersionId], references: [id])
 
   // Referensi ke Hirac "master" (untuk tracking baris yang sama lintas versi)
-  hiracId          String?
-  hirac            Hirac?          @relation(fields: [hiracId], references: [id])
+  hiracId String?
+  hirac   Hirac?  @relation(fields: [hiracId], references: [id])
 
   // ── Semua field Hirac di-snapshot di sini ──────────────────
-  no                               String?
-  kegiatan                         String
-  kategori                         ActivityCategory
-  identifikasiBahaya               String
-  akibatRisiko                     String
-  penilaianAwalAkibat              Int
-  penilaianAwalKemungkinan         String
-  penilaianAwalTingkatRisiko       RiskLevel
-  risikoDapatDiterimaAwal          Boolean
-  peraturanTerkait                 String?
-  pengendalian                     String
-  penilaianLanjutanAkibat          Int
-  penilaianLanjutanKemungkinan     String
-  penilaianLanjutanTingkatRisiko   RiskLevel
-  risikoDapatDiterimaLanjutan      Boolean
-  peluang                          String?
-  picId                            String?
-  status                           StatusControl
+  no                             String?
+  kegiatan                       String
+  kategori                       ActivityCategory
+  identifikasiBahaya             String
+  akibatRisiko                   String
+  penilaianAwalAkibat            Int
+  penilaianAwalKemungkinan       String
+  penilaianAwalTingkatRisiko     RiskLevel
+  risikoDapatDiterimaAwal        Boolean
+  peraturanTerkait               String?
+  pengendalian                   String
+  penilaianLanjutanAkibat        Int
+  penilaianLanjutanKemungkinan   String
+  penilaianLanjutanTingkatRisiko RiskLevel
+  risikoDapatDiterimaLanjutan    Boolean
+  peluang                        String?
+  picId                          String?
+  status                         StatusControl
 
   // ── Metadata diff ──────────────────────────────────────────
-  diffType         DiffType        @default(UNCHANGED)
+  diffType DiffType @default(UNCHANGED)
   // ADDED, REMOVED, MODIFIED, UNCHANGED
   // → untuk highlight di UI compare
 
-  jsaVersions      JsaProjectVersion[]
+  jsaVersions JsaProjectVersion[]
 
   // ── Metadata versioning ──────────────────────────────────
-  versionNumber    Int
-  isLatest         Boolean         @default(true)
+  versionNumber Int
+  isLatest      Boolean @default(true)
 
-  createdAt        DateTime        @default(now())
+  createdAt DateTime @default(now())
 
   @@index([projectVersionId])
   @@index([hiracId])
@@ -531,50 +543,50 @@ model HiracVersion {
 }
 
 model JsaProject {
-  id  String @id @default(cuid())
-  noJsa           String?   // Nomor JSA
-  jenisKegiatan   String    // Job Activity — e.g. "PENGUKURAN (SURVEY)"
-  lokasiKegiatan  String?   // Job Location
-  tanggalDibuat   DateTime  @default(now())
-  revisiKe        Int       @default(0)  // Revision number (00, 01, …)
+  id              String   @id @default(cuid())
+  noJsa           String? // Nomor JSA
+  jenisKegiatan   String // Job Activity — e.g. "PENGUKURAN (SURVEY)"
+  lokasiKegiatan  String? // Job Location
+  tanggalDibuat   DateTime @default(now())
+  revisiKe        Int      @default(0) // Revision number (00, 01, …)
   referensiHirarc String?
 
-  pelaksanaUtama  String?   // Supervisor in Charge
-  hseInCharge     String?   // HSE In Charge
+  pelaksanaUtama String? // Supervisor in Charge
+  hseInCharge    String? // HSE In Charge
 
   hiracs Hirac[]
 
   createdBy String
-  creator User? @relation("JsaProjectCreatedBy", fields: [createdBy], references: [id])
+  creator   User?   @relation("JsaProjectCreatedBy", fields: [createdBy], references: [id])
   updatedBy String?
-  modifyBy User? @relation("JsaProjectUpdatedBy", fields: [updatedBy], references: [id])
+  modifyBy  User?   @relation("JsaProjectUpdatedBy", fields: [updatedBy], references: [id])
   deletedBy String?
-  deleter User? @relation("JsaProjectDeletedBy", fields: [deletedBy], references: [id])
+  deleter   User?   @relation("JsaProjectDeletedBy", fields: [deletedBy], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   isDeleted Boolean @default(false)
-  
-  approvedBy String?
-  approvedAt DateTime?
-  approvedUser User? @relation("JsaProjectApprovedBy", fields: [approvedBy], references: [id])
 
-  rejectedBy String?
-  rejectedAt DateTime?
-  rejectedUser User? @relation("JsaProjectRejectedBy", fields: [rejectedBy], references: [id])
+  approvedBy   String?
+  approvedAt   DateTime?
+  approvedUser User?     @relation("JsaProjectApprovedBy", fields: [approvedBy], references: [id])
+
+  rejectedBy   String?
+  rejectedAt   DateTime?
+  rejectedUser User?     @relation("JsaProjectRejectedBy", fields: [rejectedBy], references: [id])
 
   approvalStatus ApprovalStatus @default(PENDING)
 
-  versions JsaProjectVersion[]
+  versions         JsaProjectVersion[]
   currentVersionId String?
-  apd JsaApd?
+  apd              JsaApd?
 
   jsas Jsa[]
+  ptws PtwProject[] @relation("JsaProjectPtws")
 
   @@index([currentVersionId])
-  @@map("jsa_project")
   @@index([approvalStatus])
   @@index([isDeleted])
   @@index([createdBy])
@@ -582,6 +594,7 @@ model JsaProject {
   @@index([deletedBy])
   @@index([approvedBy])
   @@index([rejectedBy])
+  @@map("jsa_project")
 }
 
 model JsaApd {
@@ -604,31 +617,31 @@ model JsaApd {
 }
 
 model JsaProjectVersion {
-  id  String @id @default(cuid())
+  id String @id @default(cuid())
 
   // Referensi ke HiracVersion
   hiracVersionId String
-  hiracVersion   HiracVersion  @relation(fields: [hiracVersionId], references: [id])
-  
+  hiracVersion   HiracVersion @relation(fields: [hiracVersionId], references: [id])
+
   // Referensi Ke JSA Master
-  jsaId          String?
-  jsaProject     JsaProject?   @relation(fields: [jsaId], references: [id])
+  jsaId      String?
+  jsaProject JsaProject? @relation(fields: [jsaId], references: [id])
 
   // ── Metadata versioning ──────────────────────────────────
-  versionNumber    Int
-  label            String?
-  changeNote       String?
+  versionNumber Int
+  label         String?
+  changeNote    String?
 
-  status        VersionStatus @default(DRAFT)
-  submittedBy   String?
-  submitter     User?         @relation("JsaProjectVersionSubmitter", fields: [submittedBy], references: [id])
-  submittedAt   DateTime?
+  status      VersionStatus @default(DRAFT)
+  submittedBy String?
+  submitter   User?         @relation("JsaProjectVersionSubmitter", fields: [submittedBy], references: [id])
+  submittedAt DateTime?
 
   // Siapa yang approve/reject versi ini
-  reviewedBy    String?
-  reviewer      User?         @relation("JsaProjectVersionReviewer", fields: [reviewedBy], references: [id])
-  reviewedAt    DateTime?
-  reviewNote    String?
+  reviewedBy String?
+  reviewer   User?     @relation("JsaProjectVersionReviewer", fields: [reviewedBy], references: [id])
+  reviewedAt DateTime?
+  reviewNote String?
 
   jsaVersions JsaVersion[]
 
@@ -646,22 +659,22 @@ model JsaProjectVersion {
 }
 
 model JsaVersionApproval {
-  id  String @id @default(cuid())
+  id String @id @default(cuid())
 
   jsaProjectVersionId String
   jsaProjectVersion   JsaProjectVersion @relation(fields: [jsaProjectVersionId], references: [id])
 
-  stepOrder        Int
-  requiredRole     Role
-  status           ApprovalStatus  @default(PENDING)
+  stepOrder    Int
+  requiredRole Role
+  status       ApprovalStatus @default(PENDING)
 
-  approvedBy       String?
-  approver         User?           @relation("JsaProjectVersionApprovalReviewer", fields: [approvedBy], references: [id])
-  approvedAt       DateTime?
-  note             String?
+  approvedBy String?
+  approver   User?     @relation("JsaProjectVersionApprovalReviewer", fields: [approvedBy], references: [id])
+  approvedAt DateTime?
+  note       String?
 
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("jsa_version_approvals")
 }
@@ -673,18 +686,18 @@ model JsaEntry {
   jsaProjectVersion   JsaProjectVersion @relation(fields: [jsaProjectVersionId], references: [id])
 
   // Nomor urut & pengelompokan (A1, A2, B1, B2, …)
-  no              Int?    // angka urut dalam satu kategori
-  kategoriGrup    String? // huruf kategori: "A", "B", "C", dst
-  namaGrup        String? // label kategori: "Persiapan", "Pelaksanaan", dst
+  no           Int? // angka urut dalam satu kategori
+  kategoriGrup String? // huruf kategori: "A", "B", "C", dst
+  namaGrup     String? // label kategori: "Persiapan", "Pelaksanaan", dst
 
   // Isi langkah kerja
-  langkahKerja    String  // Job Description
+  langkahKerja    String // Job Description
   penanggungJawab String? // PIC — e.g. "SME/SMO/SMHSE"
 
   // Diff untuk versioning compare
   diffType DiffType @default(UNCHANGED)
 
-  bahaya          JsaBahaya[]
+  bahaya JsaBahaya[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -699,9 +712,9 @@ model JsaBahaya {
   jsaEntry   JsaEntry @relation(fields: [jsaEntryId], references: [id])
 
   // Tipe sumber bahaya sesuai form (Man / Machine / Method / Material / Env)
-  tipePotensi  TipePotensi
-  deskripsi    String      // isi bahaya, e.g. "Cidera otot akibat mengangkat secara manual"
-  urutan       Int         @default(0)
+  tipePotensi TipePotensi
+  deskripsi   String // isi bahaya, e.g. "Cidera otot akibat mengangkat secara manual"
+  urutan      Int         @default(0)
 
   penanggulangan JsaPenanggulangan[]
 
@@ -718,9 +731,9 @@ model JsaPenanggulangan {
   jsaBahaya   JsaBahaya @relation(fields: [jsaBahayaId], references: [id])
 
   // Hierarki kontrol sesuai form (Adm / PPE / RE / El / Sub)
-  tipeKontrol  TipeKontrol
-  deskripsi    String       // isi penanggulangan, e.g. "Melakukan Tool box meeting sebelum pekerjaan"
-  urutan       Int          @default(0)
+  tipeKontrol TipeKontrol
+  deskripsi   String // isi penanggulangan, e.g. "Melakukan Tool box meeting sebelum pekerjaan"
+  urutan      Int         @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -730,11 +743,11 @@ model JsaPenanggulangan {
 }
 
 model Jsa {
-  id  String @id @default(cuid())
-  no Int
+  id               String @id @default(cuid())
+  no               Int
   katergoriLangkah String
-  langkahKerja String
-  penanggungJawab String
+  langkahKerja     String
+  penanggungJawab  String
 
   jsaProjectId String
   jsaProject   JsaProject @relation(fields: [jsaProjectId], references: [id])
@@ -743,7 +756,7 @@ model Jsa {
 }
 
 model JsaVersion {
-  id  String @id @default(cuid())
+  id String @id @default(cuid())
 
   jsaProjectVersionId String
   jsaProjectVersion   JsaProjectVersion @relation(fields: [jsaProjectVersionId], references: [id])
@@ -752,24 +765,24 @@ model JsaVersion {
 }
 
 model Session {
-  sid       String   @id
-  sess      Json
-  expire    DateTime
+  sid    String   @id
+  sess   Json
+  expire DateTime
 
   @@map("session")
 }
 
 model Vendor {
-  id  String @id @default(cuid())
+  id String @id @default(cuid())
 
-  vendorName String
-  vendorAddress String
-  vendorPhone String
-  vendorEmail String
-  vendorWebsite String?
-  vendorLogo String?
+  vendorName        String
+  vendorAddress     String
+  vendorPhone       String
+  vendorEmail       String
+  vendorWebsite     String?
+  vendorLogo        String?
   vendorDescription String?
-  vendorStatus VendorStatus @default(ACTIVE)
+  vendorStatus      VendorStatus @default(ACTIVE)
 
   createdBy String
   updatedBy String
@@ -779,8 +792,8 @@ model Vendor {
   updatedByUser User? @relation("VendorUpdatedBy", fields: [updatedBy], references: [id])
   deletedByUser User? @relation("VendorDeletedBy", fields: [deletedBy], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   // ─── Worker Vendor ───────────────────────────────────────
@@ -792,19 +805,24 @@ model Vendor {
   // ─── User ───────────────────────────────────────
   user User[]
 
+  // ─── Certification ───────────────────────────────────────
+  certificationProgramId String?
+  certificationProgram   CertificationProgram? @relation(fields: [certificationProgramId], references: [id])
+  certifications         VendorCertification[]
+
   @@map("vendors")
 }
 
 model WorkerVendor {
   id String @id @default(cuid())
 
-  name String
+  name    String
   address String
-  phone String
-  status String
+  phone   String
+  status  String
 
   vendorId String
-  vendor   Vendor   @relation(fields: [vendorId], references: [id])
+  vendor   Vendor @relation(fields: [vendorId], references: [id])
 
   createdBy String
   updatedBy String
@@ -814,12 +832,12 @@ model WorkerVendor {
   updatedByUser User? @relation("WorkerVendorUpdatedBy", fields: [updatedBy], references: [id])
   deletedByUser User? @relation("WorkerVendorDeletedBy", fields: [deletedBy], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  @@map("worker_vendors")
   @@index([vendorId])
+  @@map("worker_vendors")
 }
 
 // Objek Tertanam untuk Penilaian Risiko
@@ -828,16 +846,16 @@ model WorkerVendor {
 
 // Enums untuk standarisasi data
 enum ActivityCategory {
-  R   // Routine
-  NR  // Non-Routine
-  E   // Emergency
+  R // Routine
+  NR // Non-Routine
+  E // Emergency
 }
 
 enum RiskLevel {
-  L   // Low
-  M   // Medium
-  H   // High
-  E   // Extreme
+  L // Low
+  M // Medium
+  H // High
+  E // Extreme
 }
 
 enum StatusControl {
@@ -908,13 +926,13 @@ enum ApprovalStatus {
 }
 
 enum ProjectStatus {
-  DRAFT         // Baru dibuat, belum diajukan
-  SUBMITTED     // Diajukan oleh creator
-  L1_REVIEW     // Menunggu approval level 1 (misal: VERIFICATOR)
-  L2_REVIEW     // Menunggu approval level 2 (misal: EXAMINER)  
-  APPROVED      // Final approved (ADMIN)
-  REJECTED      // Ditolak di level manapun
-  REVISION      // Dikembalikan untuk revisi
+  DRAFT // Baru dibuat, belum diajukan
+  SUBMITTED // Diajukan oleh creator
+  L1_REVIEW // Menunggu approval level 1 (misal: VERIFICATOR)
+  L2_REVIEW // Menunggu approval level 2 (misal: EXAMINER)  
+  APPROVED // Final approved (ADMIN)
+  REJECTED // Ditolak di level manapun
+  REVISION // Dikembalikan untuk revisi
 }
 
 enum DiffType {
@@ -930,28 +948,185 @@ enum VersionStatus {
   IN_REVIEW
   APPROVED
   REJECTED
-  SUPERSEDED   // versi lama yang sudah digantikan versi baru
+  SUPERSEDED // versi lama yang sudah digantikan versi baru
 }
 
 // Tipe sumber bahaya (kolom "Potensi Bahaya" di form JSA)
 enum TipePotensi {
-  MAN      // Manusia
-  MACHINE  // Mesin / Peralatan
-  METHOD   // Metode / Lingkungan Kerja
+  MAN // Manusia
+  MACHINE // Mesin / Peralatan
+  METHOD // Metode / Lingkungan Kerja
   MATERIAL // Material / Bahan
-  ENV      // Lingkungan (Environment)
+  ENV // Lingkungan (Environment)
 }
 
 // Hierarki kontrol risiko (kolom "Penanggulangan" di form JSA)
 enum TipeKontrol {
-  EL   // Eliminasi
-  SUB  // Substitusi
-  RE   // Rekayasa Engineering
-  ADM  // Administratif
-  PPE  // Alat Pelindung Diri
+  EL // Eliminasi
+  SUB // Substitusi
+  RE // Rekayasa Engineering
+  ADM // Administratif
+  PPE // Alat Pelindung Diri
 }
 
 enum VendorStatus {
   ACTIVE
   INACTIVE
+}
+
+// ─── Vendor Certification Models ─────────────────────────────────────────────
+
+model CertificationProgram {
+  id           String  @id @default(cuid())
+  name         String  @unique
+  description  String?
+  isActive     Boolean @default(true)
+  validityDays Int?    // null = no expiry
+
+  modules        CertificationProgramModule[]
+  vendors        Vendor[]
+  certifications VendorCertification[]
+
+  createdBy String
+  creator   User   @relation("ProgramCreator", fields: [createdBy], references: [id])
+  updatedBy String
+  updater   User   @relation("ProgramUpdater", fields: [updatedBy], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@map("certification_programs")
+}
+
+model CertificationProgramModule {
+  id         String               @id @default(cuid())
+  programId  String
+  program    CertificationProgram @relation(fields: [programId], references: [id])
+  moduleId   String
+  module     Module               @relation(fields: [moduleId], references: [id])
+  isRequired Boolean              @default(true)
+  order      Int                  @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([programId, moduleId])
+  @@map("certification_program_modules")
+}
+
+model VendorCertification {
+  id        String               @id @default(cuid())
+  vendorId  String
+  vendor    Vendor               @relation(fields: [vendorId], references: [id])
+  programId String
+  program   CertificationProgram @relation(fields: [programId], references: [id])
+
+  status       VendorCertificationStatus @default(ACTIVE)
+  certNumber   String                    @unique
+  issuedAt     DateTime                  @default(now())
+  expiresAt    DateTime?
+  revokedAt    DateTime?
+  revokedBy    String?
+  revoker      User?                     @relation("CertificationRevoker", fields: [revokedBy], references: [id])
+  revokeReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([vendorId])
+  @@index([status])
+  @@map("vendor_certifications")
+}
+
+enum VendorCertificationStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+// ─── PTW (Permit to Work) Models ─────────────────────────────────────────────
+
+model PtwProject {
+  id    String  @id @default(cuid())
+  noPtw String? // Nomor PTW
+
+  judulPekerjaan   String // Job Title / Work Description
+  lokasiPekerjaan  String? // Work Location
+  tanggalMulai     DateTime? // Planned start date
+  tanggalSelesai   DateTime? // Planned end date
+  keteranganTambahan String? // Additional notes
+
+  // Link to the approved JSA that this PTW is based on
+  jsaProjectId String
+  jsaProject   JsaProject @relation("JsaProjectPtws", fields: [jsaProjectId], references: [id])
+
+  createdBy String
+  creator   User   @relation("PtwProjectCreatedBy", fields: [createdBy], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  isDeleted Boolean   @default(false)
+
+  approvalStatus   ApprovalStatus @default(PENDING)
+  currentVersionId String?
+
+  versions PtwProjectVersion[]
+
+  @@index([jsaProjectId])
+  @@index([approvalStatus])
+  @@index([isDeleted])
+  @@index([createdBy])
+  @@map("ptw_projects")
+}
+
+model PtwProjectVersion {
+  id String @id @default(cuid())
+
+  ptwId      String?
+  ptwProject PtwProject? @relation(fields: [ptwId], references: [id])
+
+  versionNumber Int
+  label         String?
+  changeNote    String?
+
+  status      VersionStatus @default(DRAFT)
+  submittedBy String?
+  submitter   User?         @relation("PtwProjectVersionSubmitter", fields: [submittedBy], references: [id])
+  submittedAt DateTime?
+
+  reviewedBy String?
+  reviewer   User?     @relation("PtwProjectVersionReviewer", fields: [reviewedBy], references: [id])
+  reviewedAt DateTime?
+  reviewNote String?
+
+  approvalSteps PtwVersionApproval[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ptwId])
+  @@map("ptw_project_versions")
+}
+
+model PtwVersionApproval {
+  id String @id @default(cuid())
+
+  ptwProjectVersionId String
+  ptwProjectVersion   PtwProjectVersion @relation(fields: [ptwProjectVersionId], references: [id])
+
+  stepOrder    Int
+  requiredRole Role
+  status       ApprovalStatus @default(PENDING)
+
+  approvedBy String?
+  approver   User?     @relation("PtwVersionApprovalReviewer", fields: [approvedBy], references: [id])
+  approvedAt DateTime?
+  note       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("ptw_version_approvals")
 }

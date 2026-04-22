@@ -8,19 +8,21 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint --max-warnings 0",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "jest"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",
     "@reduxjs/toolkit": "^2.11.2",
-    "@repo/api": "*",
-    "@repo/ui": "*",
-    "@repo/validation": "*",
+    "@repo/api": "workspace:*",
+    "@repo/ui": "workspace:*",
+    "@repo/validation": "workspace:*",
     "@tailwindcss/postcss": "^4.2.2",
     "@tanstack/react-query": "^5.96.2",
     "@tanstack/react-table": "^8.21.3",
     "axios": "^1.14.0",
     "cookies-next": "^6.1.1",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.7.0",
     "next": "16.2.0",
@@ -33,16 +35,24 @@
     "sonner": "^2.0.7",
     "swr": "^2.3.3",
     "tailwindcss": "^4.2.2",
+    "ts-node": "^10.9.2",
     "yup": "^1.7.1"
   },
   "devDependencies": {
-    "@repo/api": "*",
-    "@repo/eslint-config": "*",
-    "@repo/typescript-config": "*",
+    "@repo/api": "workspace:*",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^29.5.12",
     "@types/node": "^22.15.3",
     "@types/react": "19.1.0",
     "@types/react-dom": "19.1.1",
     "eslint": "^9.31.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "ts-jest": "^29.2.5",
     "typescript": "5.8.2"
   }
 }

@@ -1,9 +1,5 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
 import { Button } from '@repo/ui/components/ui/button';
 import { Card } from '@repo/ui/components/ui/card';
 import { Input } from '@repo/ui/components/ui/input';
@@ -20,93 +16,37 @@ import {
   Save,
   CheckCircle2,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { Textarea } from '@repo/ui/components/ui/textarea';
-import { useCreateVendorMutation } from '@/store/users/users-query';
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from '@repo/ui/components/ui/avatar';
-
-const createVendorSchema = yup.object({
-  vendorName: yup.string().required('Nama vendor wajib diisi'),
-  vendorEmail: yup
-    .string()
-    .email('Format email tidak valid')
-    .required('Email wajib diisi'),
-  vendorPhone: yup.string().required('Nomor telepon wajib diisi'),
-  vendorAddress: yup.string().required('Alamat wajib diisi'),
-  vendorWebsite: yup.string().optional(),
-  vendorDescription: yup.string().optional(),
-});
-
-type CreateVendorInput = yup.InferType<typeof createVendorSchema>;
+import { useCreateVendorRegistry } from './use-create-vendor-registry';
 
 export default function CreateVendorPage() {
-  const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-
-  const createVendorMutation = useCreateVendorMutation();
-
   const {
+    router,
     register,
     handleSubmit,
-    formState: { errors },
-  } = useForm<CreateVendorInput>({
-    resolver: yupResolver(createVendorSchema),
-    defaultValues: {
-      vendorName: '',
-      vendorEmail: '',
-      vendorPhone: '',
-      vendorAddress: '',
-      vendorWebsite: '',
-      vendorDescription: '',
-    },
-  });
-
-  const onSubmit = async (data: CreateVendorInput) => {
-    const payload = {
-      ...data,
-      logo: logoFile || undefined,
-    };
-
-    createVendorMutation.mutate(payload, {
-      onSuccess: () => {
-        router.push('/admin/vendor-registry');
-      },
-    });
-  };
-
-  const handleLogoClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setLogoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const isSubmitting = createVendorMutation.isPending;
+    errors,
+    onSubmit,
+    handleLogoClick,
+    handleFileChange,
+    logoPreview,
+    isSubmitting,
+    fileInputRef,
+  } = useCreateVendorRegistry();
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8 w-full max-w-5xl mx-auto overflow-hidden">
       <div className="flex justify-start">
         <Button
-          variant="outline"
-          className="gap-2 shadow-sm hover:shadow-md transition-all shrink-0 h-10 px-6"
+          variant="ghost"
+          className="group hover:bg-primary/10 -ml-2 transition-all duration-300"
           onClick={() => router.back()}
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="mr-2 h-4 s-4 group-hover:-translate-x-1 transition-transform" />
           Kembali
         </Button>
       </div>

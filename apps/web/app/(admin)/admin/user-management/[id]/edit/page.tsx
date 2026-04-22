@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, CSSProperties } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Button } from '@repo/ui/components/ui/button';
@@ -109,6 +109,7 @@ export default function EditUserPage() {
     setValue,
     watch,
     reset,
+    control,
     formState: { errors },
   } = useForm<UpdateUserInput>({
     resolver: yupResolver(updateUserSchema),
@@ -139,7 +140,10 @@ export default function EditUserPage() {
         phone: currentUser.phone || '',
         address: currentUser.address || '',
         vendorId: currentUser.vendorId || '',
-        role: currentUser.role || 'USER',
+        role:
+          typeof currentUser.role === 'string'
+            ? currentUser.role
+            : (currentUser.role as any)?.name || 'USER',
         isActive: currentUser.isActive ?? true,
         isVerified: currentUser.isVerified ?? false,
       });
@@ -164,11 +168,17 @@ export default function EditUserPage() {
       { id: userId, data: payload },
       {
         onSuccess: () => {
-          // Stay on page or go back? Image shows "Save All Changes" which usually keeps you on page or goes back.
-          // I'll stay for confirmation but user might want to go back.
+          router.push('/admin/user-management');
         },
       },
     );
+  };
+
+  const onError = (errors: any) => {
+    console.error('Validation Errors:', errors);
+    toast.error('Periksa kembali form Anda', {
+      description: 'Ada beberapa kolom yang belum diisi dengan benar.',
+    });
   };
 
   const handleAvatarClick = () => {
@@ -213,11 +223,11 @@ export default function EditUserPage() {
     <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8 w-full max-w-7xl mx-auto overflow-hidden">
       <div className="flex justify-start">
         <Button
-          variant="outline"
-          className="gap-2 shadow-sm hover:shadow-md transition-all shrink-0 h-10 px-6"
+          variant="ghost"
+          className="group hover:bg-primary/10 -ml-2 transition-all duration-300"
           onClick={() => router.back()}
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="mr-2 h-4 s-4 group-hover:-translate-x-1 transition-transform" />
           <span className="font-medium">Kembali</span>
         </Button>
       </div>
@@ -237,7 +247,7 @@ export default function EditUserPage() {
       </div>
 
       <form
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit, onError)}
         className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-20"
       >
         {/* LEFT COLUMN: General Info */}
@@ -392,31 +402,47 @@ export default function EditUserPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="vendorId">Vendor / Perusahaan</Label>
-                    <Select
-                      onValueChange={(value) => setValue('vendorId', value)}
-                      value={selectedVendorId}
+                    <Label
+                      htmlFor="vendorId"
+                      className={errors.vendorId ? 'text-destructive' : ''}
                     >
-                      <SelectTrigger
-                        id="vendorId"
-                        className="bg-muted/30 w-full"
-                      >
-                        <SelectValue
-                          placeholder={
-                            isLoadingVendors ? 'Memuat...' : 'Pilih Vendor'
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {vendors.map((v: any) => (
-                            <SelectItem key={v.id} value={v.id}>
-                              {v.vendorName}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+                      Vendor / Perusahaan
+                    </Label>
+                    <Controller
+                      name="vendorId"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <SelectTrigger
+                            id="vendorId"
+                            className={`${errors.vendorId ? 'border-destructive' : 'bg-muted/30'} w-full`}
+                          >
+                            <SelectValue
+                              placeholder={
+                                isLoadingVendors ? 'Memuat...' : 'Pilih Vendor'
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {vendors.map((v: any) => (
+                                <SelectItem key={v.id} value={v.id}>
+                                  {v.vendorName}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {errors.vendorId && (
+                      <p className="text-destructive text-xs italic">
+                        {errors.vendorId.message as string}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
@@ -471,21 +497,37 @@ export default function EditUserPage() {
             </h3>
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="role">User Role</Label>
-                <Select
-                  onValueChange={(value) => setValue('role', value as any)}
-                  value={selectedRole}
+                <Label
+                  htmlFor="role"
+                  className={errors.role ? 'text-destructive' : ''}
                 >
-                  <SelectTrigger id="role" className="bg-muted/30">
-                    <SelectValue placeholder="Pilih Role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USER">User</SelectItem>
-                    <SelectItem value="ADMIN">Admin</SelectItem>
-                    <SelectItem value="EXAMINER">Examiner</SelectItem>
-                    <SelectItem value="VERIFICATOR">Verificator</SelectItem>
-                  </SelectContent>
-                </Select>
+                  User Role
+                </Label>
+                <Controller
+                  name="role"
+                  control={control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger
+                        id="role"
+                        className={`${errors.role ? 'border-destructive' : 'bg-muted/30'} w-full`}
+                      >
+                        <SelectValue placeholder="Pilih Role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USER">User</SelectItem>
+                        <SelectItem value="ADMIN">Admin</SelectItem>
+                        <SelectItem value="EXAMINER">Examiner</SelectItem>
+                        <SelectItem value="VERIFICATOR">Verificator</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.role && (
+                  <p className="text-destructive text-xs italic">
+                    {errors.role.message as string}
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center justify-between p-3 border border-input rounded-lg bg-muted/20">

@@ -64,6 +64,12 @@ export class ProjectsController {
     return this.projectsService.submitProject(id, userId, dto.changeNote);
   }
 
+  @Patch(':id/request-revision')
+  @Roles(Role.USER, Role.ADMIN)
+  requestRevision(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.projectsService.requestRevision(id, userId);
+  }
+
   // ─── Approval flow ────────────────────────────────────────────────────────
 
   @Post(':id/approve')

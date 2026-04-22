@@ -156,11 +156,11 @@ export default function EditVendorPage() {
     <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8 w-full max-w-5xl mx-auto overflow-hidden">
       <div className="flex justify-start">
         <Button
-          variant="outline"
-          className="gap-2 shadow-sm hover:shadow-md transition-all shrink-0 h-10 px-6 font-semibold"
+          variant="ghost"
+          className="group hover:bg-primary/10 -ml-2 transition-all duration-300"
           onClick={() => router.back()}
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="mr-2 h-4 s-4 group-hover:-translate-x-1 transition-transform" />
           Kembali
         </Button>
       </div>
@@ -173,7 +173,8 @@ export default function EditVendorPage() {
           </span>
         </h1>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Perbarui informasi profil, kontak, dan identitas visual mitra kerja Anda.
+          Perbarui informasi profil, kontak, dan identitas visual mitra kerja
+          Anda.
         </p>
       </div>
 
@@ -187,7 +188,10 @@ export default function EditVendorPage() {
             <div className="flex flex-col items-center gap-6">
               <div className="relative group">
                 <Avatar className="h-32 w-32 border-4 border-background shadow-2xl group-hover:opacity-90 transition-all cursor-pointer overflow-hidden rounded-2xl">
-                  <AvatarImage src={logoPreview || ''} className="object-cover" />
+                  <AvatarImage
+                    src={logoPreview || ''}
+                    className="object-cover"
+                  />
                   <AvatarFallback className="text-3xl font-bold bg-primary/5 text-primary">
                     <Building2 className="h-12 w-12 opacity-20" />
                   </AvatarFallback>
@@ -253,7 +257,11 @@ export default function EditVendorPage() {
                   <div className="space-y-2">
                     <Label
                       htmlFor="vendorName"
-                      className={errors.vendorName ? 'text-destructive font-semibold' : 'font-semibold'}
+                      className={
+                        errors.vendorName
+                          ? 'text-destructive font-semibold'
+                          : 'font-semibold'
+                      }
                     >
                       Nama Perusahaan / Vendor
                     </Label>
@@ -273,7 +281,11 @@ export default function EditVendorPage() {
                     <div className="space-y-2">
                       <Label
                         htmlFor="vendorEmail"
-                        className={errors.vendorEmail ? 'text-destructive font-semibold' : 'font-semibold'}
+                        className={
+                          errors.vendorEmail
+                            ? 'text-destructive font-semibold'
+                            : 'font-semibold'
+                        }
                       >
                         Email Perusahaan
                       </Label>
@@ -296,7 +308,11 @@ export default function EditVendorPage() {
                     <div className="space-y-2">
                       <Label
                         htmlFor="vendorPhone"
-                        className={errors.vendorPhone ? 'text-destructive font-semibold' : 'font-semibold'}
+                        className={
+                          errors.vendorPhone
+                            ? 'text-destructive font-semibold'
+                            : 'font-semibold'
+                        }
                       >
                         Nomor Telepon
                       </Label>
@@ -318,7 +334,9 @@ export default function EditVendorPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="vendorWebsite" className="font-semibold">Website</Label>
+                    <Label htmlFor="vendorWebsite" className="font-semibold">
+                      Website
+                    </Label>
                     <div className="relative">
                       <Input
                         id="vendorWebsite"
@@ -332,7 +350,11 @@ export default function EditVendorPage() {
                   <div className="space-y-2">
                     <Label
                       htmlFor="vendorAddress"
-                      className={errors.vendorAddress ? 'text-destructive font-semibold' : 'font-semibold'}
+                      className={
+                        errors.vendorAddress
+                          ? 'text-destructive font-semibold'
+                          : 'font-semibold'
+                      }
                     >
                       Alamat Lengkap
                     </Label>
@@ -352,7 +374,12 @@ export default function EditVendorPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="vendorDescription" className="font-semibold">Deskripsi / Profil</Label>
+                    <Label
+                      htmlFor="vendorDescription"
+                      className="font-semibold"
+                    >
+                      Deskripsi / Profil
+                    </Label>
                     <Textarea
                       id="vendorDescription"
                       className="min-h-[100px] bg-muted/30"

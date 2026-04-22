@@ -5,6 +5,10 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { RedisService } from '../common/redis/redis.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { MailService } from '../mail/mail.service';
+import { InvitationsService } from '../invitations/invitations.service';
+import { MinioService } from '../common/minio/minio.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
@@ -36,6 +40,28 @@ const mockRedisService = {
   set: jest.fn(),
   get: jest.fn(),
   del: jest.fn(),
+  delByPattern: jest.fn(),
+};
+
+const mockNotificationsService = {
+  notifyNewUserLocal: jest.fn(),
+  notifyNewUserGoogle: jest.fn(),
+};
+
+const mockMailService = {
+  notifyAdminsNewUser: jest.fn(),
+  sendBulkRegistrationEmail: jest.fn(),
+  sendAdminBulkReportEmail: jest.fn(),
+};
+
+const mockInvitationsService = {
+  validateToken: jest.fn(),
+  acceptInvitation: jest.fn(),
+};
+
+const mockMinioService = {
+  uploadFile: jest.fn(),
+  getFileUrl: jest.fn(),
 };
 
 const mockLogger = {
@@ -54,7 +80,11 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: mockJwtService },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: AuditLogService, useValue: mockAuditLogService },
+        { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: MailService, useValue: mockMailService },
+        { provide: InvitationsService, useValue: mockInvitationsService },
         { provide: RedisService, useValue: mockRedisService },
+        { provide: MinioService, useValue: mockMinioService },
         { provide: WINSTON_MODULE_NEST_PROVIDER, useValue: mockLogger },
       ],
     }).compile();

@@ -9,7 +9,7 @@ import * as bcrypt from 'bcryptjs';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from '../common/redis/redis.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
-import { MinioService } from 'src/common/minio/minio.service';
+import { MinioService } from '../common/minio/minio.service';
 
 @Injectable()
 export class UsersService {

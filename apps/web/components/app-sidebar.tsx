@@ -70,14 +70,43 @@ const moduleMenus = {
       icon: Users,
     },
     {
-      title: 'Vendor Registry',
-      url: '/admin/vendor-registry',
+      title: 'Vendor Management',
+      url: '#',
       icon: Building2,
+      items: [
+        {
+          title: 'Vendor Registry',
+          url: '/admin/vendor-registry',
+          icon: Building2,
+        },
+        {
+          title: 'Worker Management',
+          url: '/admin/worker-management',
+          icon: HardHat,
+        },
+      ],
     },
     {
-      title: 'Worker Management',
-      url: '/admin/worker-management',
-      icon: HardHat,
+      title: 'Training',
+      url: '#',
+      icon: GraduationCap,
+      items: [
+        {
+          title: 'Modul Training',
+          url: '/admin/training/modules',
+          icon: GraduationCap,
+        },
+        {
+          title: 'Daftar Ujian',
+          url: '/admin/training/exams',
+          icon: ClipboardCheck,
+        },
+        {
+          title: 'Certification Programs',
+          url: '/admin/certification-programs',
+          icon: FileBadge,
+        },
+      ],
     },
     {
       title: 'System Logs',
@@ -114,6 +143,16 @@ const moduleMenus = {
       icon: ShieldCheck,
     },
     {
+      title: 'JSA',
+      url: '/hse/jsa',
+      icon: ShieldCheck,
+    },
+    {
+      title: 'PTW',
+      url: '/hse/ptw',
+      icon: ClipboardCheck,
+    },
+    {
       title: 'Worker Management',
       url: '/hse/worker-management',
       icon: HardHat,
@@ -137,6 +176,11 @@ const moduleMenus = {
       icon: FileBadge,
     },
     {
+      title: 'Sertifikasi Saya',
+      url: '/training/vendor-certification',
+      icon: MonitorCheck,
+    },
+    {
       title: 'Student Records',
       url: '/training/students',
       icon: Users,
@@ -158,6 +202,16 @@ export function AppSidebar({
     email: authData?.email ?? '',
     avatar: authData?.avatarUrl ?? '/images/avatar.png',
   };
+
+  // Filter admin menu items based on user role
+  const isAdmin = authData?.role?.toUpperCase() === 'ADMIN';
+  const adminMenuItems = moduleMenus.admin.filter((item) => {
+    // Only show "Modul Training" for ADMIN users
+    if (item.title === 'Modul Training') {
+      return isAdmin;
+    }
+    return true;
+  });
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -186,7 +240,9 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <ModuleSwitcher modules={moduleMenus.modules} />
-        <NavMain items={moduleMenus[module]} />
+        <NavMain
+          items={module === 'admin' ? adminMenuItems : moduleMenus[module]}
+        />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />

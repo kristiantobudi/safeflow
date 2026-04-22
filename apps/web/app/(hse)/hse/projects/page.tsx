@@ -23,11 +23,14 @@ import { Input } from '@repo/ui/components/ui/input';
 import { DataTableCustoms } from '@repo/ui/components/advanced-data-table/data-table-customs';
 import { useProjectsQuery } from '@/store/project-hirac/query';
 import { ProjectUpsertModal } from '@/components/hse/project-upsert-modal';
+import { ProjectQuickView } from '@/components/hse/project-quick-view';
 import Link from 'next/link';
 
 export default function SafetyProjectsPage() {
   const [search, setSearch] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const { data: projectsData, isLoading } = useProjectsQuery();
 
   const projects = useMemo(() => {
@@ -38,7 +41,7 @@ export default function SafetyProjectsPage() {
     return {
       total: projects.length,
       draft: projects.filter((p: any) => p.status === 'DRAFT').length,
-      pending: projects.filter((p: any) => p.status === 'PENDING').length,
+      review: projects.filter((p: any) => p.status === 'L1_REVIEW' || p.status === 'L2_REVIEW' || p.status === 'SUBMITTED').length,
       approved: projects.filter((p: any) => p.status === 'APPROVED').length,
     };
   }, [projects]);
@@ -79,9 +82,12 @@ export default function SafetyProjectsPage() {
         const status = row.original.status;
         const variants: Record<string, string> = {
           DRAFT: 'bg-muted text-muted-foreground',
-          PENDING: 'bg-amber-500/10 text-amber-600',
+          L1_REVIEW: 'bg-amber-500/10 text-amber-600',
+          L2_REVIEW: 'bg-amber-500/10 text-amber-600',
+          SUBMITTED: 'bg-amber-500/10 text-amber-600',
           APPROVED: 'bg-emerald-500/10 text-emerald-600',
           REJECTED: 'bg-destructive/10 text-destructive',
+          REVISION: 'bg-destructive/10 text-destructive',
         };
         return (
           <Badge
@@ -105,12 +111,26 @@ export default function SafetyProjectsPage() {
     {
       id: 'actions',
       cell: ({ row }: any) => (
-        <Link href={`/hse/projects/${row.original.id}`}>
-          <Button variant="ghost" size="sm" className="gap-2 group">
-            Detail
-            <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="gap-2 h-8 text-primary hover:text-primary hover:bg-primary/5 font-bold"
+            onClick={() => {
+              setSelectedProjectId(row.original.id);
+              setIsQuickViewOpen(true);
+            }}
+          >
+            <Search className="h-3.5 w-3.5" />
+            Quick View
           </Button>
-        </Link>
+          <Link href={`/hse/projects/${row.original.id}`}>
+            <Button variant="ghost" size="sm" className="gap-2 h-8 group hover:bg-muted font-medium">
+              Detail
+              <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </Button>
+          </Link>
+        </div>
       ),
     },
   ];
@@ -143,7 +163,7 @@ export default function SafetyProjectsPage() {
             <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
               <ClipboardList className="h-6 w-6 text-primary" />
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col items-center">
               <p className="text-sm font-medium text-muted-foreground">
                 Total Project
               </p>
@@ -154,12 +174,12 @@ export default function SafetyProjectsPage() {
             <div className="h-12 w-12 rounded-2xl bg-amber-500/10 flex items-center justify-center">
               <Clock className="h-6 w-6 text-amber-500" />
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col items-center">
               <p className="text-sm font-medium text-muted-foreground">
-                Pending Approval
+                In Review
               </p>
               <p className="text-2xl font-bold text-amber-600">
-                {stats.pending}
+                {stats.review}
               </p>
             </div>
           </Card>
@@ -167,7 +187,7 @@ export default function SafetyProjectsPage() {
             <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
               <Badge className="bg-emerald-500/10 h-6 w-6 text-emerald-500 border-none shadow-none" />
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col items-center">
               <p className="text-sm font-medium text-muted-foreground">
                 Approved
               </p>
@@ -212,6 +232,11 @@ export default function SafetyProjectsPage() {
       </Card>
 
       <ProjectUpsertModal open={isCreateOpen} onOpenChange={setIsCreateOpen} />
+      <ProjectQuickView 
+        projectId={selectedProjectId} 
+        open={isQuickViewOpen} 
+        onOpenChange={setIsQuickViewOpen} 
+      />
     </div>
   );
 }

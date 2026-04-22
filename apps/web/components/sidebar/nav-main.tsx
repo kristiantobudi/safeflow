@@ -43,7 +43,9 @@ export function NavMain({
       <SidebarGroupLabel>Menu</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
-          const isModuleRoot = ['/admin', '/hse', '/training'].includes(item.url);
+          const isModuleRoot = ['/admin', '/hse', '/training'].includes(
+            item.url,
+          );
           const isItemActive = isModuleRoot
             ? pathname === item.url
             : pathname === item.url || pathname.startsWith(item.url + '/');
@@ -60,18 +62,21 @@ export function NavMain({
               key={item.title}
               asChild
               defaultOpen={item.isActive || active}
+              className="group/collapsible"
             >
               <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  tooltip={item.title}
-                  isActive={active}
-                >
-                  <Link href={item.url}>
-                    <item.icon />
-                    <span>{item.title}</span>
-                  </Link>
-                </SidebarMenuButton>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={item.title}
+                    isActive={active}
+                  >
+                    <Link href={item.url}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
                 {item.items?.length ? (
                   <>
                     <CollapsibleTrigger asChild>
@@ -86,7 +91,10 @@ export function NavMain({
                           const isSubItemActive = pathname === subItem.url;
                           return (
                             <SidebarMenuSubItem key={subItem.title}>
-                              <SidebarMenuSubButton asChild isActive={isSubItemActive}>
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={isSubItemActive}
+                              >
                                 <Link href={subItem.url}>
                                   <span>{subItem.title}</span>
                                 </Link>

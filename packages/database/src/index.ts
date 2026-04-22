@@ -17,5 +17,7 @@ export {
   TipePotensi,
   TipeKontrol,
   VendorStatus,
+  VendorCertificationStatus,
+  AttemptStatus,
 } from '../generated/client';
 export type { User } from '../generated/client';

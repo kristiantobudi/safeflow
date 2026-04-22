@@ -78,7 +78,6 @@ export class ProjectsService {
             // Tampilkan versi terakhir di list
             versions: {
               orderBy: { versionNumber: 'desc' },
-              take: 1,
               select: { versionNumber: true, status: true, submittedAt: true },
             },
           },
@@ -89,6 +88,8 @@ export class ProjectsService {
           select: {
             id: true,
             unitKerja: true,
+            lokasiKerja: true,
+            tanggal: true,
             status: true,
             creator: {
               select: {
@@ -100,7 +101,6 @@ export class ProjectsService {
             },
             versions: {
               orderBy: { versionNumber: 'desc' },
-              take: 1,
               select: { versionNumber: true, status: true, submittedAt: true },
             },
           },
@@ -121,7 +121,6 @@ export class ProjectsService {
         hiracs: { where: { isActive: true }, orderBy: { no: 'asc' } },
         versions: {
           orderBy: { versionNumber: 'desc' },
-          take: 1,
           include: {
             approvalSteps: {
               include: {
@@ -179,7 +178,22 @@ export class ProjectsService {
 
     return this.prisma
       .$transaction(async (tx) => {
-        // 1. Buat snapshot versi baru lebih dulu untuk mendapatkan versionId
+        // 1. Ambil info approval dari versi sebelumnya (jika ada)
+        const previousVer = await tx.projectVersion.findFirst({
+          where: { projectId: id },
+          orderBy: { versionNumber: 'desc' },
+          include: {
+            approvalSteps: {
+              where: { stepOrder: 1 },
+              select: { status: true },
+            },
+          },
+        });
+
+        const wasL1Approved =
+          previousVer?.approvalSteps?.[0]?.status === ApprovalStatus.APPROVED;
+
+        // 2. Buat snapshot versi baru lebih dulu untuk mendapatkan versionId
         const versionId = await this.projectVersionService.createSnapshot(
           id,
           userId,
@@ -188,27 +202,36 @@ export class ProjectsService {
           tx,
         );
 
-        // 2. Buat approval steps baru untuk VERSI ini (bukan project secara global)
-        await tx.versionApproval.createMany({
-          data: [
-            {
-              projectVersionId: versionId,
-              stepOrder: 1,
-              requiredRole: Role.VERIFICATOR,
-              status: ApprovalStatus.PENDING,
-            },
-            {
-              projectVersionId: versionId,
-              stepOrder: 2,
-              requiredRole: Role.EXAMINER,
-              status: ApprovalStatus.PENDING,
-            },
-          ],
+        // 3. Buat approval steps baru. Jika L1 sudah pernah OK, skip L1.
+        const stepsToCreate: any[] = [];
+
+        if (!wasL1Approved) {
+          stepsToCreate.push({
+            projectVersionId: versionId,
+            stepOrder: 1,
+            requiredRole: Role.VERIFICATOR,
+            status: ApprovalStatus.PENDING,
+          });
+        }
+
+        stepsToCreate.push({
+          projectVersionId: versionId,
+          stepOrder: 2,
+          requiredRole: Role.EXAMINER,
+          status: ApprovalStatus.PENDING,
         });
+
+        await tx.versionApproval.createMany({
+          data: stepsToCreate,
+        });
+
+        const nextStatus = wasL1Approved
+          ? ProjectStatus.L2_REVIEW
+          : ProjectStatus.L1_REVIEW;
 
         const updatedProject = await tx.project.update({
           where: { id },
-          data: { status: ProjectStatus.L1_REVIEW },
+          data: { status: nextStatus },
         });
 
         await this.auditLogService.log({
@@ -216,7 +239,7 @@ export class ProjectsService {
           action: 'PROJECT_SUBMITTED',
           entity: 'Project',
           entityId: id,
-          newValue: { status: ProjectStatus.L1_REVIEW, versionId },
+          newValue: { status: nextStatus, versionId, skippedL1: wasL1Approved },
         });
 
         return updatedProject;
@@ -386,5 +409,44 @@ export class ProjectsService {
   // ─── Compare dua versi ───────────────────────────────────────────────────────
   async compareVersions(projectId: string, vA?: number, vB?: number) {
     return this.projectVersionService.compareVersions(projectId, vA, vB);
+  }
+
+  // ─── Request Revision: Creator pulls back a submission ───────────────────────
+  async requestRevision(id: string, userId: string): Promise<any> {
+    const project = (await this.findOne(id)) as any;
+
+    if (project.createdBy !== userId) {
+      throw new ForbiddenException(
+        'Only the creator can request a revision for their project',
+      );
+    }
+
+    if (
+      project.status !== ProjectStatus.L1_REVIEW &&
+      project.status !== ProjectStatus.L2_REVIEW &&
+      project.status !== ProjectStatus.APPROVED
+    ) {
+      throw new BadRequestException(
+        'Project is not in a state that can be recalled for revision',
+      );
+    }
+
+    const updatedProject = await this.prisma.project.update({
+      where: { id },
+      data: {
+        status: ProjectStatus.REVISION,
+      },
+    });
+
+    await this.auditLogService.log({
+      userId,
+      action: 'PROJECT_REVISION_REQUESTED_BY_CREATOR',
+      entity: 'Project',
+      entityId: id,
+      newValue: { status: ProjectStatus.REVISION },
+    });
+
+    await this.invalidateProjectCache(id, userId);
+    return updatedProject;
   }
 }

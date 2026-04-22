@@ -10,7 +10,17 @@ import {
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
+import { Calendar } from '@repo/ui/components/ui/calendar';
 import { useCreateProjectMutation } from '@/store/project-hirac/query';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@repo/ui/components/ui/popover';
+import { useState } from 'react';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@repo/ui/lib/utils';
 
 interface ProjectUpsertModalProps {
   open: boolean;
@@ -21,7 +31,8 @@ export function ProjectUpsertModal({
   open,
   onOpenChange,
 }: ProjectUpsertModalProps) {
-  const { register, handleSubmit, reset } = useForm();
+  const [date, setDate] = useState<Date>();
+  const { register, handleSubmit, reset, setValue } = useForm();
   const createMutation = useCreateProjectMutation();
 
   const onSubmit = (data: any) => {
@@ -60,14 +71,38 @@ export function ProjectUpsertModal({
               {...register('lokasiKerja', { required: true })}
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 flex flex-col">
             <Label htmlFor="tanggal">Tanggal Pelaksanaan</Label>
-            <Input
-              id="tanggal"
-              type="date"
-              className="bg-muted/50 border-none"
-              {...register('tanggal', { required: true })}
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={'outline'}
+                  className={cn(
+                    'w-full justify-start text-left font-normal bg-muted/50 border-none h-10',
+                    !date && 'text-muted-foreground',
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date ? format(date, 'PPP') : <span>Pilih tanggal</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-auto p-0 rounded-2xl border-none shadow-2xl"
+                align="start"
+              >
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={(d) => {
+                    setDate(d);
+                    if (d) {
+                      setValue('tanggal', format(d, 'yyyy-MM-dd'));
+                    }
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

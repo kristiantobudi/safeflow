@@ -91,6 +91,8 @@ export class ProjectVersionService {
           picId: h.picId,
           status: h.status,
           diffType,
+          versionNumber: nextVersion,
+          isLatest: true,
         };
       });
 
@@ -120,6 +122,8 @@ export class ProjectVersionService {
           picId: h.picId,
           status: h.status,
           diffType: DiffType.REMOVED,
+          versionNumber: nextVersion,
+          isLatest: true,
         }));
 
       await tx.hiracVersion.createMany({

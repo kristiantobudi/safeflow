@@ -22,7 +22,10 @@ export function getIndonesiaZone(timeZone: Timezone) {
 
 export function getTimeSpan(data: SensorChartPointInterface[]) {
   if (data.length < 2) return 0;
-  return data[data.length - 1].time - data[0].time;
+  const last = data[data.length - 1];
+  const first = data[0];
+  if (!last || !first) return 0;
+  return last.time - first.time;
 }
 
 export function formatTimeLabel(value: number, span: number) {

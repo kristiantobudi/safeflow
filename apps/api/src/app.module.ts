@@ -26,6 +26,10 @@ import { HiracModule } from './hse/hirac/hirac.module';
 import { VendorModule } from './hse/vendor/vendor.module';
 import { AppStorageModule } from './common/minio/minio.module';
 import { WorkerVendorModule } from './hse/worker-vendor/worker-vendor.module';
+import { VendorCertificationModule } from './hse/vendor-certification/vendor-certification.module';
+import { JsaModule } from './hse/jsa/jsa.module';
+import { PtwModule } from './hse/ptw/ptw.module';
+import { TrainingModule } from './training/training.module';
 
 @Module({
   imports: [
@@ -88,6 +92,10 @@ import { WorkerVendorModule } from './hse/worker-vendor/worker-vendor.module';
     VendorModule,
     AppStorageModule,
     WorkerVendorModule,
+    VendorCertificationModule,
+    JsaModule,
+    PtwModule,
+    TrainingModule,
   ],
 })
 export class AppModule {}

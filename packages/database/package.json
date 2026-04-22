@@ -34,7 +34,7 @@
     "bcryptjs": "^2.4.3"
   },
   "devDependencies": {
-    "@repo/typescript-config": "*",
+    "@repo/typescript-config": "workspace:*",
     "@types/bcryptjs": "^2.4.2",
     "babel-plugin-react-compiler": "^1.0.0",
     "prisma": "^5.22.0",

@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { useVendorsQuery } from '@/store/users/users-query';
 import { Button } from '@repo/ui/components/ui/button';
 import {
   Dialog,
@@ -42,59 +41,23 @@ import {
 import { DataTableCustoms } from '@repo/ui/components/advanced-data-table/data-table-customs';
 import { Row } from '@tanstack/react-table';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { Card } from '@repo/ui/components/ui/card';
-import { toast } from 'sonner';
-
-interface VendorProps {
-  id: string;
-  vendorName: string;
-  vendorEmail: string;
-  vendorPhone: string;
-  vendorAddress: string;
-  vendorLogo: string | null;
-  vendorStatus: string;
-  createdAt: string;
-}
+import { useVendorRegistry, VendorProps } from './use-vendor-registry';
 
 export default function VendorRegistryPage() {
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-  const [globalSearch, setGlobalSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const router = useRouter();
-
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(globalSearch);
-      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [globalSearch]);
-
-  const { data, isLoading } = useVendorsQuery(
-    pagination.pageIndex + 1,
-    pagination.pageSize,
-    debouncedSearch,
-  );
-
-  const totalVendors = data?.data?.stats?.total || 0;
-  const activeVendors = data?.data?.stats?.active || 0;
-
-  const memoizedData = useMemo(() => {
-    if (!data) return [];
-    return data.data?.vendors || data.vendors || [];
-  }, [data]);
-
-  const safeTotalPersonel = data?.data?.total || data?.vendors?.length || 0;
-
-  const handleCopyId = (id: string) => {
-    navigator.clipboard.writeText(id);
-    toast.success('Vendor ID copied to clipboard');
-  };
-
-  const safeTotalCount = data?.data?.total || 0;
+  const {
+    router,
+    handleCopyId,
+    memoizedData,
+    safeTotalCount,
+    safeTotalPersonel,
+    activeVendors,
+    totalVendors,
+    isLoading,
+    setGlobalSearch,
+    pagination,
+    setPagination,
+  } = useVendorRegistry();
 
   const columns = useMemo(
     () => [
@@ -296,7 +259,7 @@ export default function VendorRegistryPage() {
             <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
               <ShieldCheck className="h-6 w-6 text-emerald-500" />
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col items-center">
               <p className="text-sm font-medium text-muted-foreground">
                 Vendor Aktif
               </p>
@@ -307,7 +270,7 @@ export default function VendorRegistryPage() {
             <div className="h-12 w-12 rounded-2xl bg-amber-500/10 flex items-center justify-center">
               <Users className="h-6 w-6 text-amber-500" />
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col items-center">
               <p className="text-sm font-medium text-muted-foreground">
                 Total Personel
               </p>
