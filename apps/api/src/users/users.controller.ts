@@ -8,7 +8,6 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
   UseInterceptors,
-  UploadedFile,
   Param,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -17,8 +16,10 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@repo/database';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { MinioService } from '../common/minio/minio.service';
+import { FastifyFileInterceptor } from '../common/interceptors/fastify-file.interceptor';
+import { UploadedMultipartFile } from '../common/decorators/uploaded-multipart-file.decorator';
+import { UploadedFile as MyFile } from '../common/interface/file.interface';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -38,6 +39,8 @@ export class UsersController {
       authProvider,
       googleId,
       googleEmail,
+      invittationToken,
+      initedByEmail,
       ...profile
     } = user;
 
@@ -49,9 +52,9 @@ export class UsersController {
   }
 
   @Patch('me')
-  @UseInterceptors(FileInterceptor('avatar'))
+  @UseInterceptors(new FastifyFileInterceptor('avatar'))
   async updateProfile(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedMultipartFile() file: MyFile,
     @CurrentUser('id') userId: string,
     @Body()
     body: {
@@ -86,10 +89,10 @@ export class UsersController {
 
   @Patch(':id')
   @Roles(Role.ADMIN)
-  @UseInterceptors(FileInterceptor('avatar'))
+  @UseInterceptors(new FastifyFileInterceptor('avatar'))
   async updateUser(
     @Param('id') id: string,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedMultipartFile() file: MyFile,
     @Body() body: any,
   ) {
     const updated = await this.usersService.updateUser(id, body, file);

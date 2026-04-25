@@ -9,6 +9,7 @@ import { PrismaService } from '../../database/prisma.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
 import { MinioService } from '../../common/minio/minio.service';
+import { UploadedFile } from '../../common/interface/file.interface';
 
 @Injectable()
 export class VendorService {
@@ -22,11 +23,7 @@ export class VendorService {
   /**
    * Menambahkan vendor baru dengan upload logo (menyimpan key)
    */
-  async addVendor(
-    data: CreateVendorDto,
-    userId: string,
-    file?: Express.Multer.File,
-  ) {
+  async addVendor(data: CreateVendorDto, userId: string, file?: UploadedFile) {
     const vendorName = await this.prisma.vendor.findFirst({
       where: {
         vendorName: data.vendorName,
@@ -86,7 +83,7 @@ export class VendorService {
     data: UpdateVendorDto,
     userId: string,
     vendorId: string,
-    file?: Express.Multer.File,
+    file?: UploadedFile,
   ) {
     const existingVendor = await this.prisma.vendor.findUnique({
       where: { id: vendorId },
@@ -181,14 +178,16 @@ export class VendorService {
       this.prisma.vendor.count({
         where,
       }),
-      this.prisma.vendor.count({ where: { deletedAt: null } }).then(async (total) => {
-        return {
-          total,
-          active: await this.prisma.vendor.count({
-            where: { vendorStatus: 'ACTIVE', deletedAt: null },
-          }),
-        };
-      }),
+      this.prisma.vendor
+        .count({ where: { deletedAt: null } })
+        .then(async (total) => {
+          return {
+            total,
+            active: await this.prisma.vendor.count({
+              where: { vendorStatus: 'ACTIVE', deletedAt: null },
+            }),
+          };
+        }),
     ]);
 
     // Lakukan transformasi URL setelah data didapat dari database

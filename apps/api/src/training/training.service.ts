@@ -15,6 +15,7 @@ import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { Role } from '@repo/database';
 import { Workbook } from 'exceljs';
+import { UploadedFile } from '../common/interface/file.interface';
 
 @Injectable()
 export class TrainingService {
@@ -212,7 +213,7 @@ export class TrainingService {
 
   async uploadModuleFile(
     moduleId: string,
-    file: Express.Multer.File,
+    file: UploadedFile,
     userId: string,
   ) {
     const module = await this.findModuleById(moduleId);
@@ -412,7 +413,7 @@ export class TrainingService {
 
   async bulkCreateQuestions(
     examId: string,
-    file: Express.Multer.File,
+    file: UploadedFile,
     userId: string,
   ) {
     // Verify exam exists

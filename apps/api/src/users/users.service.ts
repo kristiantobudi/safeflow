@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { RedisService } from '../common/redis/redis.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { MinioService } from '../common/minio/minio.service';
+import { UploadedFile as MyFile } from '../common/interface/file.interface';
 
 @Injectable()
 export class UsersService {
@@ -156,20 +157,26 @@ export class UsersService {
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.user.count({ where }),
-      this.prisma.user.aggregate({
-        _count: {
-          id: true,
-        },
-        where: { authProvider: 'LOCAL' }, // Simplified global stats
-      }).then(async () => {
-        // We need more specific counts, better to use Promise.all for stats
-        return {
-          total: await this.prisma.user.count(),
-          verified: await this.prisma.user.count({ where: { isVerified: true } }),
-          unverified: await this.prisma.user.count({ where: { isVerified: false } }),
-          active: await this.prisma.user.count({ where: { isActive: true } }),
-        };
-      }),
+      this.prisma.user
+        .aggregate({
+          _count: {
+            id: true,
+          },
+          where: { authProvider: 'LOCAL' }, // Simplified global stats
+        })
+        .then(async () => {
+          // We need more specific counts, better to use Promise.all for stats
+          return {
+            total: await this.prisma.user.count(),
+            verified: await this.prisma.user.count({
+              where: { isVerified: true },
+            }),
+            unverified: await this.prisma.user.count({
+              where: { isVerified: false },
+            }),
+            active: await this.prisma.user.count({ where: { isActive: true } }),
+          };
+        }),
     ]);
 
     // Resolve avatar URLs and flatten vendor information
@@ -315,7 +322,7 @@ export class UsersService {
       password: string;
       avatarUrl: string;
     }>,
-    file?: Express.Multer.File,
+    file?: MyFile,
   ) {
     const user = await this.findById(userId);
     if (!user) throw new NotFoundException('User not found');
@@ -410,7 +417,7 @@ export class UsersService {
       isActive: boolean;
       isVerified: boolean;
     }>,
-    file?: Express.Multer.File,
+    file?: MyFile,
   ) {
     const user = await this.findById(userId);
     if (!user) throw new NotFoundException('User not found');

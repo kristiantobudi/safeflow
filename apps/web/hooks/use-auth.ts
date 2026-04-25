@@ -1,7 +1,6 @@
-import { AuthState } from '@/types/auth-state';
-import { useQueryClient } from '@tanstack/react-query';
+import { useAuthQuery } from '@/store/auth/auth-query';
 
 export function useAuth() {
-  const queryClient = useQueryClient();
-  return queryClient.getQueryData<AuthState>(['auth']);
+  const { data } = useAuthQuery();
+  return data ?? null;
 }

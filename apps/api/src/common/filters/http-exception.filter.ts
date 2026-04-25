@@ -5,7 +5,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { FastifyReply, FastifyRequest } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 
 @Catch()
@@ -14,8 +14,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    const response = ctx.getResponse<FastifyReply>();
+    const request = ctx.getRequest<FastifyRequest>();
 
     const requestId = (request as any).requestId || uuidv4();
     const isHttpException = exception instanceof HttpException;
@@ -54,7 +54,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       );
     }
 
-    response.status(status).json({
+    const errorBody = {
       success: false,
       statusCode: status,
       message,
@@ -62,6 +62,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: request.url,
       requestId,
-    });
+    };
+
+    if (typeof response.status === 'function') {
+      response.status(status).send(errorBody);
+    } else {
+      const res = response as any;
+      res.statusCode = status;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(errorBody));
+    }
   }
 }

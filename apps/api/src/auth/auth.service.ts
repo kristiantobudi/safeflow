@@ -22,6 +22,7 @@ import { InvitationsService } from '../invitations/invitations.service';
 import { AuthProvider } from '@repo/database';
 import { parseExcelRegisterUser } from '../utils/excel.parser';
 import { MinioService } from '../common/minio/minio.service';
+import { UploadedFile as MyFile } from '../common/interface/file.interface';
 
 interface GoogleUserDto {
   googleId: string;
@@ -176,7 +177,7 @@ export class AuthService {
   }
 
   async uploadExcelToRegister(
-    file: Express.Multer.File,
+    file: MyFile,
     createdBy?: string,
     ipAddress?: string,
     userAgent?: string,

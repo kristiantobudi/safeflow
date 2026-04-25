@@ -8,14 +8,15 @@ import {
   Delete,
   UseGuards,
   UseInterceptors,
-  UploadedFile,
+  Res,
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
-  Res,
 } from '@nestjs/common';
-import { Response } from 'express';
-import { FileInterceptor } from '@nestjs/platform-express';
+import type { FastifyReply as Response } from 'fastify';
+import { FastifyFileInterceptor } from '../common/interceptors/fastify-file.interceptor';
+import { UploadedMultipartFile } from '../common/decorators/uploaded-multipart-file.decorator';
+import { UploadedFile as MyFile } from '../common/interface/file.interface';
 import * as Yup from 'yup';
 import { TrainingService } from './training.service';
 import { UpdateModuleDto } from './dto/update-module.dto';
@@ -104,43 +105,23 @@ export class TrainingController {
   @Post('modules/:id/files')
   @Roles(Role.ADMIN)
   @UseInterceptors(
-    FileInterceptor('file', {
-      storage: memoryStorage(),
-      fileFilter: (req, file, cb) => {
-        const allowedMimes = [
-          'application/pdf',
-          'video/mp4',
-          'video/mpeg',
-          'video/quicktime',
-          'image/jpeg',
-          'image/png',
-          'image/gif',
-          'image/webp',
-        ];
-        if (allowedMimes.includes(file.mimetype)) {
-          cb(null, true);
-        } else {
-          cb(new Error('Only PDF, video, and image files are allowed'), false);
-        }
-      },
-      limits: {
-        fileSize: 100 * 1024 * 1024, // 100MB
-      },
+    new FastifyFileInterceptor('file', {
+      maxFileSize: 100 * 1024 * 1024,
+      allowedMimeTypes: [
+        'application/pdf',
+        'video/mp4',
+        'video/mpeg',
+        'video/quicktime',
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+      ],
     }),
   )
   uploadModuleFile(
     @Param('id') id: string,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 100 * 1024 * 1024 }), // 100MB
-          new FileTypeValidator({
-            fileType: /(pdf|mp4|mpeg|quicktime|jpeg|png|gif|webp)/,
-          }),
-        ],
-      }),
-    )
-    file: Express.Multer.File,
+    @UploadedMultipartFile() file: MyFile,
     @CurrentUser('id') userId: string,
   ) {
     return this.trainingService.uploadModuleFile(id, file, userId);
@@ -204,13 +185,13 @@ export class TrainingController {
   @Roles(Role.ADMIN)
   async downloadQuestionTemplate(@Res() res: Response) {
     const buffer = await this.trainingService.getQuestionTemplate();
-    res.set({
+    res.headers({
       'Content-Type':
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': 'attachment; filename=template_soal_ujian.xlsx',
       'Content-Length': (buffer as any).length,
     });
-    res.end(buffer);
+    return res.send(buffer);
   }
 
   // ─── Question endpoints ───────────────────────────────────────────────────
@@ -234,21 +215,12 @@ export class TrainingController {
    */
   @Post('exams/:examId/questions/bulk')
   @Roles(Role.ADMIN)
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  @UseInterceptors(
+    new FastifyFileInterceptor('file', { maxFileSize: 100 * 1024 * 1024 }),
+  )
   bulkUploadQuestions(
     @Param('examId') examId: string,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }), // 10MB
-          new FileTypeValidator({
-            fileType:
-              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          }),
-        ],
-      }),
-    )
-    file: Express.Multer.File,
+    @UploadedMultipartFile() file: MyFile,
     @CurrentUser('id') userId: string,
   ) {
     return this.trainingService.bulkCreateQuestions(examId, file, userId);
@@ -260,10 +232,12 @@ export class TrainingController {
    */
   @Post('questions/:id/image')
   @Roles(Role.ADMIN)
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  @UseInterceptors(
+    new FastifyFileInterceptor('file', { maxFileSize: 100 * 1024 * 1024 }),
+  )
   uploadQuestionImage(
     @Param('id') id: string,
-    @UploadedFile(
+    @UploadedMultipartFile(
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB

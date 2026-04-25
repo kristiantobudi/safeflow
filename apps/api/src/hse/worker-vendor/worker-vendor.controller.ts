@@ -10,11 +10,10 @@ import {
   Post,
   Query,
   Res,
-  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { Response } from 'express';
+import type { FastifyReply as Response } from 'fastify';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { WorkerVendorService } from './worker-vendor.service';
@@ -23,7 +22,9 @@ import { CreateWorkerVendorDto } from './dto/create-worker-vendor.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Role } from '@repo/database';
 import { UpdateWorkerVendorDto } from './dto/update-worker-vendor.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FastifyFileInterceptor } from '../../common/interceptors/fastify-file.interceptor';
+import { UploadedMultipartFile } from '../../common/decorators/uploaded-multipart-file.decorator';
+import { UploadedFile as MyFile } from '../../common/interface/file.interface';
 import * as ExcelJS from 'exceljs';
 
 @Controller('worker-vendor')
@@ -52,9 +53,9 @@ export class WorkerVendorController {
 
   @Post('register-bulk')
   @Roles(Role.ADMIN, Role.VERIFICATOR, Role.EXAMINER)
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(new FastifyFileInterceptor('file'))
   async uploadWorkerVendor(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedMultipartFile() file: MyFile,
     @CurrentUser('id') userId: string,
   ) {
     return this.workerVendorService.bulkRegisterWorkerVendor(file, userId);
@@ -128,16 +129,17 @@ export class WorkerVendorController {
       }
     }
 
-    res.setHeader(
+    res.header(
       'Content-Disposition',
       'attachment; filename=template-worker-vendor.xlsx',
     );
-    res.setHeader(
+    res.header(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );
-    await workbook.xlsx.write(res);
-    res.end();
+
+    await workbook.xlsx.write(res.raw);
+    return;
   }
 
   @Get(':id')

@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Req,
   UseGuards,
   Post,
   Patch,
@@ -9,12 +8,13 @@ import {
   Get,
   Delete,
   UseInterceptors,
-  UploadedFile,
   Query,
   DefaultValuePipe,
   ParseIntPipe,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FastifyFileInterceptor } from '../../common/interceptors/fastify-file.interceptor';
+import { UploadedMultipartFile } from '../../common/decorators/uploaded-multipart-file.decorator';
+import { UploadedFile as MyFile } from '../../common/interface/file.interface';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { VendorService } from './vendor.service';
@@ -31,9 +31,9 @@ export class VendorController {
 
   @Post()
   @Roles(Role.ADMIN)
-  @UseInterceptors(FileInterceptor('logo'))
+  @UseInterceptors(new FastifyFileInterceptor('logo'))
   async addVendor(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedMultipartFile() file: MyFile,
     @Body() data: CreateVendorDto,
     @CurrentUser('id') userId: string,
   ) {
@@ -42,9 +42,9 @@ export class VendorController {
 
   @Patch(':id')
   @Roles(Role.ADMIN)
-  @UseInterceptors(FileInterceptor('logo'))
+  @UseInterceptors(new FastifyFileInterceptor('logo'))
   async updateVendor(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedMultipartFile() file: MyFile,
     @Body() data: UpdateVendorDto,
     @CurrentUser('id') userId: string,
     @Param('id') vendorId: string,

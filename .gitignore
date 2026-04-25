@@ -55,6 +55,9 @@ dist
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# IDE - Antigravity
+.agent/
+
 # Debug
 logs
 *.log

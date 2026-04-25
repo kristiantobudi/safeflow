@@ -11,7 +11,6 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
-import { HiracService } from '../hirac/hirac.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateHiracDto } from '../hirac/dto/create-hirac.dto';
 import { ReviewProjectDto } from './dto/review-project.dto';
@@ -26,10 +25,7 @@ import { SubmitProjectDto } from './dto/submit-project.dto';
 @Controller('projects')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ProjectsController {
-  constructor(
-    private readonly projectsService: ProjectsService,
-    private readonly hiracService: HiracService,
-  ) {}
+  constructor(private readonly projectsService: ProjectsService) {}
 
   // ─── Project CRUD ─────────────────────────────────────────────────────────
 
@@ -128,47 +124,5 @@ export class ProjectsController {
     @Query('vB', new ParseIntPipe({ optional: true })) vB?: number,
   ) {
     return this.projectsService.compareVersions(id, vA, vB);
-  }
-
-  // ─── HIRAC endpoints ──────────────────────────────────────────────────────
-
-  @Post(':id/hirac')
-  @Roles(Role.USER, Role.ADMIN)
-  addHirac(
-    @Param('id') projectId: string,
-    @Body() createHiracDto: CreateHiracDto,
-    @CurrentUser('id') userId: string,
-  ) {
-    return this.hiracService.addHiracToProject(
-      projectId,
-      createHiracDto,
-      userId,
-    );
-  }
-
-  @Patch(':projectId/hirac/:id')
-  @Roles(Role.USER, Role.ADMIN)
-  updateHirac(
-    @Param('id') id: string,
-    @Body() updateHiracDto: Partial<CreateHiracDto>,
-    @CurrentUser('id') userId: string,
-  ) {
-    return this.hiracService.updateHirac(id, updateHiracDto, userId);
-  }
-
-  @Delete(':projectId/hirac/:id')
-  @Roles(Role.USER, Role.ADMIN)
-  removeHirac(@Param('id') id: string, @CurrentUser('id') userId: string) {
-    return this.hiracService.deleteHirac(id, userId);
-  }
-
-  /**
-   * PATCH /projects/:projectId/hirac/:id/restore
-   * Undo soft-delete HIRAC selama project masih DRAFT/REVISION.
-   */
-  @Patch(':projectId/hirac/:id/restore')
-  @Roles(Role.USER, Role.ADMIN)
-  restoreHirac(@Param('id') id: string, @CurrentUser('id') userId: string) {
-    return this.hiracService.restoreHirac(id, userId);
   }
 }

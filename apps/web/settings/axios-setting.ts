@@ -88,9 +88,8 @@ api.interceptors.response.use(
       }
 
       try {
-        const res = await refreshAccessToken(userId);
-        // Correcting extraction path: res.data is the axios body, res.data.data is the tokens from TransformInterceptor
-        const { accessToken } = res.data.data;
+        const responseData = await refreshAccessToken(userId);
+        const { accessToken } = responseData.data;
 
         if (accessToken) {
           setCookie('token', accessToken);

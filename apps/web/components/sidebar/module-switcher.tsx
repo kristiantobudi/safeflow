@@ -20,6 +20,7 @@ import {
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 export function ModuleSwitcher({
   modules,
@@ -35,7 +36,8 @@ export function ModuleSwitcher({
   const { isMobile } = useSidebar();
   const pathname = usePathname();
 
-  const activeModule = modules.find((m) => pathname.startsWith(m.url)) || modules[0];
+  const activeModule =
+    modules.find((m) => pathname.startsWith(m.url)) || modules[0];
 
   if (!activeModule) {
     return null;
@@ -54,7 +56,9 @@ export function ModuleSwitcher({
                 <activeModule.icon className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{activeModule.title}</span>
+                <span className="truncate font-medium">
+                  {activeModule.title}
+                </span>
                 <span className="truncate text-xs">
                   {activeModule.description}
                 </span>
@@ -63,7 +67,7 @@ export function ModuleSwitcher({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg border border-none"
             align="start"
             side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}
@@ -72,18 +76,24 @@ export function ModuleSwitcher({
               Modules
             </DropdownMenuLabel>
             {modules.map((module) => (
-              <DropdownMenuItem
+              <motion.div
                 key={module.title}
-                asChild
-                className="gap-2 p-2"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ duration: 0.2 }}
               >
-                <Link href={module.url}>
-                  <div className="flex size-6 items-center justify-center rounded-md border">
-                    <module.icon className="size-3.5 shrink-0" />
-                  </div>
-                  {module.title}
-                </Link>
-              </DropdownMenuItem>
+                <DropdownMenuItem
+                  asChild
+                  className="gap-2 p-2 hover:bg-primary/30 hover:text-primary cursor-pointer "
+                >
+                  <Link href={module.url}>
+                    <div className="flex size-6 items-center justify-center rounded-md border border-muted hover:border-primary">
+                      <module.icon className="size-3.5 shrink-0 hover:border-primary hover:bg-primary hover:text-primary-foreground" />
+                    </div>
+                    {module.title}
+                  </Link>
+                </DropdownMenuItem>
+              </motion.div>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>

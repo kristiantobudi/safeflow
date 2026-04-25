@@ -40,3 +40,10 @@ export const jsaService = {
     return response.data.data;
   },
 };
+
+export type {
+  JsaListItem /**
+   * Submit a JSA for approval.
+   * PATCH /api/v1/jsa/:id/submit
+   */,
+};

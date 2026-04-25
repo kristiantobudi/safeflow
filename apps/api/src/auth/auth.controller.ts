@@ -11,13 +11,12 @@ import {
   Param,
   Get,
   UseInterceptors,
-  UploadedFile,
   Query,
   DefaultValuePipe,
   ParseIntPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import type { Response } from 'express';
+import type { FastifyReply as Response } from 'fastify';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -26,12 +25,12 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { Roles } from '../common/decorators/roles.decorator';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { multerConfigExcel } from '../config/multer.config';
 import { UsersService } from '../users/users.service';
 import { GoogleAuthGuard } from '../common/guards/google-auth.guard';
 import * as ExcelJS from 'exceljs';
-import 'multer';
+import { FastifyFileInterceptor } from '../common/interceptors/fastify-file.interceptor';
+import { UploadedMultipartFile } from '../common/decorators/uploaded-multipart-file.decorator';
+import { UploadedFile as MyFile } from '../common/interface/file.interface';
 
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
@@ -57,9 +56,9 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Roles('ADMIN', 'EXAMINER')
-  @UseInterceptors(FileInterceptor('file', multerConfigExcel))
+  @UseInterceptors(new FastifyFileInterceptor('file'))
   async uploadExcelToRegister(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedMultipartFile() file: MyFile,
     @CurrentUser('id') createdBy: string,
     @Request() req: any,
   ) {
@@ -166,17 +165,16 @@ export class AuthController {
       }
     }
 
-    res.setHeader(
+    res.header(
       'Content-Disposition',
       'attachment; filename=template-register-user.xlsx',
     );
-    res.setHeader(
+    res.header(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );
-
-    await workbook.xlsx.write(res);
-    res.end();
+    await workbook.xlsx.write(res.raw);
+    return;
   }
 
   @Public()

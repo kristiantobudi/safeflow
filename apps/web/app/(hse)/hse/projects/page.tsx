@@ -29,7 +29,9 @@ import Link from 'next/link';
 export default function SafetyProjectsPage() {
   const [search, setSearch] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
+    null,
+  );
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const { data: projectsData, isLoading } = useProjectsQuery();
 
@@ -41,7 +43,12 @@ export default function SafetyProjectsPage() {
     return {
       total: projects.length,
       draft: projects.filter((p: any) => p.status === 'DRAFT').length,
-      review: projects.filter((p: any) => p.status === 'L1_REVIEW' || p.status === 'L2_REVIEW' || p.status === 'SUBMITTED').length,
+      review: projects.filter(
+        (p: any) =>
+          p.status === 'L1_REVIEW' ||
+          p.status === 'L2_REVIEW' ||
+          p.status === 'SUBMITTED',
+      ).length,
       approved: projects.filter((p: any) => p.status === 'APPROVED').length,
     };
   }, [projects]);
@@ -112,9 +119,9 @@ export default function SafetyProjectsPage() {
       id: 'actions',
       cell: ({ row }: any) => (
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             className="gap-2 h-8 text-primary hover:text-primary hover:bg-primary/5 font-bold"
             onClick={() => {
               setSelectedProjectId(row.original.id);
@@ -125,7 +132,11 @@ export default function SafetyProjectsPage() {
             Quick View
           </Button>
           <Link href={`/hse/projects/${row.original.id}`}>
-            <Button variant="ghost" size="sm" className="gap-2 h-8 group hover:bg-muted font-medium">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 h-8 group hover:bg-muted font-medium"
+            >
               Detail
               <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
             </Button>
@@ -136,7 +147,7 @@ export default function SafetyProjectsPage() {
   ];
 
   return (
-    <div className="p-8 space-y-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
+    <div className="p-8 space-y-8 max-w-7xl mx-auto animate-in fade-in duration-500">
       {/* Header & Stats Section */}
       <div className="flex flex-col gap-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -232,10 +243,10 @@ export default function SafetyProjectsPage() {
       </Card>
 
       <ProjectUpsertModal open={isCreateOpen} onOpenChange={setIsCreateOpen} />
-      <ProjectQuickView 
-        projectId={selectedProjectId} 
-        open={isQuickViewOpen} 
-        onOpenChange={setIsQuickViewOpen} 
+      <ProjectQuickView
+        projectId={selectedProjectId}
+        open={isQuickViewOpen}
+        onOpenChange={setIsQuickViewOpen}
       />
     </div>
   );

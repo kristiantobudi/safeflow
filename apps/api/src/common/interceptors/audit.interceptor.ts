@@ -8,6 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { AuditLogService } from '../../audit-log/audit-log.service';
+import { FastifyRequest } from 'fastify';
 
 export const AUDIT_KEY = 'audit_action';
 
@@ -35,10 +36,10 @@ export class AuditInterceptor implements NestInterceptor {
       context.getHandler(),
     );
 
-    if (!auditMeta) return next.handle(); // No audit needed
+    if (!auditMeta) return next.handle();
 
-    const request = context.switchToHttp().getRequest();
-    const user = request.user;
+    const request = context.switchToHttp().getRequest<FastifyRequest>();
+    const user = (request as any).user;
     const { action, entity } = auditMeta;
 
     return next.handle().pipe(
@@ -51,8 +52,8 @@ export class AuditInterceptor implements NestInterceptor {
             entityId: response?.data?.id || user?.id,
             newValue: response?.data,
             ipAddress: request.ip,
-            userAgent: request.headers['user-agent'],
-            requestId: request.requestId,
+            userAgent: request.headers['user-agent'] as string,
+            requestId: (request as any).requestId,
             status: 'SUCCESS',
           });
         },
@@ -62,8 +63,8 @@ export class AuditInterceptor implements NestInterceptor {
             action: action + '_FAILED',
             entity,
             ipAddress: request.ip,
-            userAgent: request.headers['user-agent'],
-            requestId: request.requestId,
+            userAgent: request.headers['user-agent'] as string,
+            requestId: (request as any).requestId,
             status: 'FAILURE',
             metadata: { error: err.message },
           });

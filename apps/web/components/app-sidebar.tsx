@@ -29,9 +29,8 @@ import {
 } from '@repo/ui/components/ui/sidebar';
 import Image from 'next/image';
 import logo from '@/public/images/safeguard1.png';
-import { useQueryClient } from '@tanstack/react-query';
-import { AuthState } from '@/types/auth-state';
 import { ModuleSwitcher } from './sidebar/module-switcher';
+import { useAuthQuery } from '@/store/auth/auth-query';
 
 const moduleMenus = {
   modules: [
@@ -194,17 +193,20 @@ export function AppSidebar({
 }: React.ComponentProps<typeof Sidebar> & {
   module?: 'admin' | 'hse' | 'training';
 }) {
-  const queryClient = useQueryClient();
-  const authData = queryClient.getQueryData<AuthState>(['auth']);
+  const { data: authQueryData, isLoading } = useAuthQuery();
 
   const userData = {
-    name: authData?.name ?? 'User',
-    email: authData?.email ?? '',
-    avatar: authData?.avatarUrl ?? '/images/avatar.png',
+    name: authQueryData?.name ?? 'User',
+    email: authQueryData?.email ?? '',
+    avatar: authQueryData?.avatarUrl ?? '/images/avatar.png',
   };
 
+  if (isLoading) {
+    return null;
+  }
+
   // Filter admin menu items based on user role
-  const isAdmin = authData?.role?.toUpperCase() === 'ADMIN';
+  const isAdmin = authQueryData?.role?.toUpperCase() === 'ADMIN';
   const adminMenuItems = moduleMenus.admin.filter((item) => {
     // Only show "Modul Training" for ADMIN users
     if (item.title === 'Modul Training') {

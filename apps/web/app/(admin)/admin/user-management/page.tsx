@@ -162,9 +162,25 @@ export default function UserManagement() {
                 </Avatar>
               )}
               <div className="flex flex-col">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-sm leading-none">{name}</span>
-                </div>
+                <span className="font-bold text-sm leading-none">{name}</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-xs text-muted-foreground hover:text-primary transition-colors cursor-help">
+                      {row.original.email}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="flex items-center gap-2">
+                    <span>{row.original.email}</span>
+                    <Button
+                      onClick={() => handleCopyId(row.original.email)}
+                      size="icon"
+                      variant="ghost"
+                      className="h-4 w-4 hover:bg-transparent hover:text-background transition-colors"
+                    >
+                      <Copy className="h-2.5 w-2.5" />
+                    </Button>
+                  </TooltipContent>
+                </Tooltip>
                 <div className="flex items-center gap-1 mt-1">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                     ID: {row.original.id.slice(-6).toUpperCase()}

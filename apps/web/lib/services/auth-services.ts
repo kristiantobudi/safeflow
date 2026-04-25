@@ -87,6 +87,8 @@ export async function refreshAccessToken(userId: string) {
 }
 
 export async function getUserProfile() {
-  const res = await api.get(`${API_URL}/users/me`);
+  const res = await api.get(`${API_URL}/users/me`, {
+    withCredentials: true,
+  });
   return res.data;
 }

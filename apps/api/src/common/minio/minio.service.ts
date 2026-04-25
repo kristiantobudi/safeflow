@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { MinioService as NestMinioService } from 'nestjs-minio-client';
 import * as crypto from 'crypto';
 import * as path from 'path';
+import * as stream from 'stream';
+import { UploadedFile } from '../interface/file.interface';
 
 @Injectable()
 export class MinioService implements OnModuleInit {
@@ -42,19 +44,20 @@ export class MinioService implements OnModuleInit {
   /**
    * Mengunggah file ke MinIO dan mengembalikan Object Key (path)
    */
-  async uploadFile(
-    file: Express.Multer.File,
-    folder: string = '',
-  ): Promise<string> {
-    const fileExtension = path.extname(file.originalname);
+  async uploadFile(file: UploadedFile, folder: string = ''): Promise<string> {
+    const originalname = file.originalname || `upload_${Date.now()}`;
+    const fileExtension = path.extname(originalname);
     const fileName = `${crypto.randomUUID()}${fileExtension}`;
     const filePath = folder ? `${folder}/${fileName}` : fileName;
 
     try {
+      // MinIO v7 putObject with size arg expects a Readable stream, not Buffer.
+      // Convert Buffer to Readable to satisfy the type check.
+      const readable = stream.Readable.from(file.buffer);
       await this.minioClient.client.putObject(
         this.bucketName,
         filePath,
-        file.buffer,
+        readable,
         file.size,
         {
           'Content-Type': file.mimetype,

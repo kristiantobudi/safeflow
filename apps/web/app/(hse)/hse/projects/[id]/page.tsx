@@ -34,8 +34,7 @@ import { useState, useMemo } from 'react';
 import { DataTableCustoms } from '@repo/ui/components/advanced-data-table/data-table-customs';
 import { HiracBulkUploadModal } from '@/components/hse/hirac-bulk-upload-modal';
 import { HiracPreviewModal } from '@/components/hse/hirac-preview-modal';
-import { useQuery } from '@tanstack/react-query';
-import { AuthState } from '@/types/auth-state';
+import { useAuth } from '@/hooks/use-auth';
 import {
   Dialog,
   DialogContent,
@@ -72,11 +71,7 @@ export default function ProjectDetailPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingHirac, setEditingHirac] = useState<any>(null);
 
-  const { data: auth } = useQuery<AuthState | null>({
-    queryKey: ['auth'],
-    queryFn: () => null,
-    staleTime: Infinity,
-  });
+  const auth = useAuth();
   const userId = auth?.id;
   const userRole = auth?.role;
 

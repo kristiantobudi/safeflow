@@ -42,9 +42,9 @@ import {
   useSubmitProjectMutation,
 } from '@/store/project-hirac/query';
 import { useQuery } from '@tanstack/react-query';
-import { AuthState } from '@/types/auth-state';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
+import { useAuth } from '@/hooks/use-auth';
 import {
   Popover,
   PopoverContent,
@@ -72,11 +72,7 @@ export function ProjectQuickView({
   const [note, setNote] = useState('');
 
   const { data: projectResponse } = useProjectDetailsQuery(projectId as string);
-  const { data: auth } = useQuery<AuthState | null>({
-    queryKey: ['auth'],
-    queryFn: () => null,
-    staleTime: Infinity,
-  });
+  const auth = useAuth();
 
   const project = projectResponse?.data;
   const userRole = auth?.role;

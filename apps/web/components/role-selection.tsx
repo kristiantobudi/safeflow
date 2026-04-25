@@ -5,8 +5,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@repo/ui/lib/utils';
 import Link from 'next/link';
-import { useQueryClient } from '@tanstack/react-query';
-import { AuthState } from '@/types/auth-state';
+import { useAuth } from '@/hooks/use-auth';
 
 const roles = [
   {
@@ -38,8 +37,7 @@ interface RoleSelectionProps {
 
 export default function RoleSelection({ onSelect }: RoleSelectionProps) {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  const queryClient = useQueryClient();
-  const authData = queryClient.getQueryData<AuthState>(['auth']);
+  const authData = useAuth();
   const userRole = authData?.role;
 
   const filteredRoles = roles.filter((role) => {

@@ -11,6 +11,7 @@ import { UpdateWorkerVendorDto } from './dto/update-worker-vendor.dto';
 import { parseExcelRegisterWorkerVendor } from '../../utils/excel.parser';
 import * as XLSX from 'xlsx';
 import { MinioService } from '../../common/minio/minio.service';
+import { UploadedFile } from '../../common/interface/file.interface';
 
 @Injectable()
 export class WorkerVendorService {
@@ -154,19 +155,21 @@ export class WorkerVendorService {
       this.prisma.workerVendor.count({
         where,
       }),
-      this.prisma.workerVendor.count({ where: { deletedAt: null } }).then(async (total) => {
-        const uniqueVendors = await this.prisma.workerVendor.groupBy({
-          by: ['vendorId'],
-          where: { deletedAt: null },
-        });
-        return {
-          total,
-          active: await this.prisma.workerVendor.count({
-            where: { status: 'ACTIVE', deletedAt: null },
-          }),
-          vendorsCount: uniqueVendors.length,
-        };
-      }),
+      this.prisma.workerVendor
+        .count({ where: { deletedAt: null } })
+        .then(async (total) => {
+          const uniqueVendors = await this.prisma.workerVendor.groupBy({
+            by: ['vendorId'],
+            where: { deletedAt: null },
+          });
+          return {
+            total,
+            active: await this.prisma.workerVendor.count({
+              where: { status: 'ACTIVE', deletedAt: null },
+            }),
+            vendorsCount: uniqueVendors.length,
+          };
+        }),
     ]);
 
     const result = {
@@ -301,10 +304,7 @@ export class WorkerVendorService {
     return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
   }
 
-  async bulkRegisterWorkerVendor(
-    file: Express.Multer.File,
-    createdBy?: string,
-  ) {
+  async bulkRegisterWorkerVendor(file: UploadedFile, createdBy?: string) {
     if (!file) {
       await this.auditLogService.log({
         userId: createdBy,

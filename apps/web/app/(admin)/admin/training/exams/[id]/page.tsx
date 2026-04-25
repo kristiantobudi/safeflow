@@ -132,7 +132,7 @@ export default function ExamDetailPage() {
             </CardFooter>
           </Card>
 
-          <Card className="border-muted shadow-lg bg-card/10 backdrop-blur-sm">
+          <Card className="border-muted shadow-lg bg-card backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-lg">Tips Admin</CardTitle>
             </CardHeader>

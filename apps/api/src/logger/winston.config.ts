@@ -5,6 +5,10 @@ import 'winston-daily-rotate-file';
 
 const { combine, timestamp, printf, colorize, errors, json } = winston.format;
 
+const auditFilter = winston.format((info) => {
+  return info.context === 'AuditLog' ? info : false;
+});
+
 const devFormat = printf(
   ({ level, message, timestamp, stack, context, requestId }) => {
     const ctx = context ? `[${context}]` : '';
@@ -29,6 +33,16 @@ export const winstonConfig = (
             errors({ stack: true }),
             devFormat,
           ),
+    }),
+
+    // ─── Rotating File: Audit logs ────────────────────────
+    new winston.transports.DailyRotateFile({
+      filename: 'logs/audit-%DATE%.json',
+      datePattern: 'YYYY-MM-DD',
+      zippedArchive: true,
+      maxSize: '20m',
+      maxFiles: '30d',
+      format: combine(auditFilter(), timestamp(), json()),
     }),
 
     // ─── Rotating File: All logs ──────────────────────────

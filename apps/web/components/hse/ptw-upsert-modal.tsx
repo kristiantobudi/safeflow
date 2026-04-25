@@ -26,8 +26,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@repo/ui/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
-import { useCreatePtw, parseServerValidationErrors, CreatePtwData } from '@/store/ptw/query';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@repo/ui/components/ui/card';
+import {
+  useCreatePtw,
+  parseServerValidationErrors,
+  CreatePtwData,
+} from '@/store/ptw/query';
 import { useJsaList } from '@/store/jsa/query';
 import { JsaListItem } from '@/lib/services/jsa';
 import * as yup from 'yup';
@@ -72,21 +81,18 @@ const ptwSchema = yup.object({
 
 type PtwFormData = yup.InferType<typeof ptwSchema>;
 
-export function PtwUpsertModal({
-  open,
-  onOpenChange,
-}: PtwUpsertModalProps) {
+export function PtwUpsertModal({ open, onOpenChange }: PtwUpsertModalProps) {
   const createMutation = useCreatePtw();
   const { data: jsaList, isLoading: isLoadingJsa } = useJsaList();
 
   // Filter only approved JSA records
-  const approvedJsaList = jsaList?.filter(
-    (jsa: JsaListItem) => jsa.approvalStatus === 'APPROVED'
-  ) ?? [];
+  const approvedJsaList =
+    jsaList?.filter((jsa: JsaListItem) => jsa.approvalStatus === 'APPROVED') ??
+    [];
 
   // Find selected JSA details
   const selectedJsa = jsaList?.find(
-    (jsa: JsaListItem) => jsa.id === form.getValues('jsaProjectId')
+    (jsa: JsaListItem) => jsa.id === form.getValues('jsaProjectId'),
   );
 
   const form = useForm<PtwFormData>({
@@ -111,10 +117,11 @@ export function PtwUpsertModal({
         // Parse server validation errors and set them on the form
         const serverErrors = parseServerValidationErrors(error);
         Object.entries(serverErrors).forEach(([field, errorInfo]) => {
-          if (errorInfo?.message) {
+          const err = errorInfo as any;
+          if (err?.message) {
             form.setError(field as keyof PtwFormData, {
               type: 'server',
-              message: errorInfo.message,
+              message: err.message,
             });
           }
         });
@@ -131,7 +138,10 @@ export function PtwUpsertModal({
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6 py-4"
+          >
             <div className="grid grid-cols-1 gap-4">
               <FormField
                 control={form.control}
@@ -201,17 +211,27 @@ export function PtwUpsertModal({
                   </CardHeader>
                   <CardContent className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <Label className="text-xs text-muted-foreground">Nomor JSA</Label>
-                      <p className="font-medium">{selectedJsa.noJsa ?? 'N/A'}</p>
+                      <Label className="text-xs text-muted-foreground">
+                        Nomor JSA
+                      </Label>
+                      <p className="font-medium">
+                        {selectedJsa.noJsa ?? 'N/A'}
+                      </p>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Jenis Kegiatan</Label>
+                      <Label className="text-xs text-muted-foreground">
+                        Jenis Kegiatan
+                      </Label>
                       <p className="font-medium">{selectedJsa.jenisKegiatan}</p>
                     </div>
                     {selectedJsa.lokasiKegiatan && (
                       <div className="col-span-2">
-                        <Label className="text-xs text-muted-foreground">Lokasi</Label>
-                        <p className="font-medium">{selectedJsa.lokasiKegiatan}</p>
+                        <Label className="text-xs text-muted-foreground">
+                          Lokasi
+                        </Label>
+                        <p className="font-medium">
+                          {selectedJsa.lokasiKegiatan}
+                        </p>
                       </div>
                     )}
                   </CardContent>
@@ -220,8 +240,13 @@ export function PtwUpsertModal({
               {/* Info message when no approved JSA is available */}
               {!isLoadingJsa && approvedJsaList.length === 0 && (
                 <div className="p-3 rounded-md bg-muted/50 text-sm text-muted-foreground">
-                  <p className="font-medium mb-1">Tidak ada JSA yang tersedia</p>
-                  <p>Anda perlu memiliki JSA dengan status &quot;APPROVED&quot; terlebih dahulu sebelum membuat PTW.</p>
+                  <p className="font-medium mb-1">
+                    Tidak ada JSA yang tersedia
+                  </p>
+                  <p>
+                    Anda perlu memiliki JSA dengan status &quot;APPROVED&quot;
+                    terlebih dahulu sebelum membuat PTW.
+                  </p>
                 </div>
               )}
               <FormField
@@ -252,8 +277,20 @@ export function PtwUpsertModal({
                         <Input
                           type="date"
                           className="bg-muted/50 border-none"
-                          value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                          onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
+                          value={
+                            field.value
+                              ? new Date(field.value)
+                                  .toISOString()
+                                  .split('T')[0]
+                              : ''
+                          }
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? new Date(e.target.value)
+                                : undefined,
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -270,8 +307,20 @@ export function PtwUpsertModal({
                         <Input
                           type="date"
                           className="bg-muted/50 border-none"
-                          value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                          onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
+                          value={
+                            field.value
+                              ? new Date(field.value)
+                                  .toISOString()
+                                  .split('T')[0]
+                              : ''
+                          }
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? new Date(e.target.value)
+                                : undefined,
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />

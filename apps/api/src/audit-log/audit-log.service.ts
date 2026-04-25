@@ -31,10 +31,21 @@ export class AuditLogService {
    */
   async log(payload: AuditLogPayload): Promise<void> {
     try {
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const validUserId =
         payload.userId && /^[a-fA-F0-9]{24}$/.test(payload.userId)
           ? payload.userId
           : null;
+
+      this.logger.log(
+        {
+          message: `Audit: ${payload.action}`,
+          ...payload,
+          timestamp: new Date().toISOString(),
+        },
+        'AuditLog',
+      );
 
       await this.prisma.auditLog.create({
         data: {
@@ -144,7 +155,10 @@ export class AuditLogService {
    */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleLogCleanup() {
-    this.logger.log('Starting scheduled audit log cleanup...', 'AuditLogService');
+    this.logger.log(
+      'Starting scheduled audit log cleanup...',
+      'AuditLogService',
+    );
     const deletedCount = await this.archiveLogs(30);
     this.logger.log(
       `Cleanup finished. Deleted ${deletedCount} logs.`,

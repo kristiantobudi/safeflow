@@ -330,6 +330,20 @@ export function WorkerManagementView() {
   return (
     <TooltipProvider>
       <div className="flex flex-col gap-6 w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-2">
+          <div className="space-y-1">
+            <div className="flex items-center">
+              <HardHat className="mr-2 h-8 w-8 text-primary" />
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+                Manajemen Tenaga Kerja
+              </h1>
+            </div>
+            <p className="text-sm text-muted-foreground italic">
+              Kelola data pekerja dari seluruh mitra vendor SafeFlow.
+            </p>
+          </div>
+        </div>
+
         {/* STATS HEADER */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card className="p-4 border-none shadow-sm bg-gradient-to-br from-primary/5 to-transparent flex items-center gap-4">
@@ -367,15 +381,17 @@ export function WorkerManagementView() {
           </Card>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-2">
-          <div className="space-y-1">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-              Manajemen Tenaga Kerja
-            </h1>
-            <p className="text-sm text-muted-foreground italic">
-              Kelola data pekerja dari seluruh mitra vendor SafeFlow.
-            </p>
+        <div className="flex items-end justify-between">
+          <div className="relative w-full sm:max-w-md px-2">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Cari nama worker atau vendor..."
+              className="pl-10 h-10 bg-card border-none shadow-sm"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
+
           <div className="flex flex-wrap gap-3 w-full sm:w-auto">
             <Button
               variant="outline"
@@ -404,16 +420,6 @@ export function WorkerManagementView() {
               Tambah Worker
             </Button>
           </div>
-        </div>
-
-        <div className="relative w-full sm:max-w-md px-2">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Cari nama worker atau vendor..."
-            className="pl-10 h-10 bg-card border-none shadow-sm"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
         </div>
 
         <Card className="border-none shadow-2xl">

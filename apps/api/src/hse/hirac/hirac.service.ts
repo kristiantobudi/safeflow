@@ -15,6 +15,7 @@ import {
 } from '@repo/database';
 import * as XLSX from 'xlsx';
 import * as ExcelJS from 'exceljs';
+import { UploadedFile as MyFile } from '../../common/interface/file.interface';
 
 @Injectable()
 export class HiracService {
@@ -414,11 +415,7 @@ export class HiracService {
   /**
    * Bulk upload HIRAC dari file Excel ke Project tertentu
    */
-  async bulkRegisterHirac(
-    projectId: string,
-    file: Express.Multer.File,
-    userId: string,
-  ) {
+  async bulkRegisterHirac(projectId: string, file: MyFile, userId: string) {
     await this.validateProjectEditable(projectId);
 
     const workbook = XLSX.read(file.buffer, { type: 'buffer' });
@@ -437,7 +434,7 @@ export class HiracService {
     });
 
     const validHiracs: any[] = [];
-    
+
     // State to track last activity data for inheritance
     let lastNo = '';
     let lastKegiatan = '';
@@ -446,22 +443,23 @@ export class HiracService {
     for (const [index, row] of rawData.entries()) {
       // row is now an array of values based on column order
       // A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11, M=12, N=13, O=14, P=15, Q=16, R=17
-      
+
       // Helper to safely get and normalize string values
-      const getVal = (idx: number, fallback = '') => String(row[idx] || fallback).trim();
-      
+      const getVal = (idx: number, fallback = '') =>
+        String(row[idx] || fallback).trim();
+
       const colKegiatan = row[1];
       const colBahaya = row[3];
-      
+
       // Update inherited values if the current row has a new activity name
       if (colKegiatan) {
-          lastNo = row[0] ? String(row[0]).trim() : String(index + 1);
-          lastKegiatan = String(colKegiatan).trim();
-          
-          const rawKategori = getVal(2).toUpperCase();
-          lastKategori = ['R', 'NR', 'E'].includes(rawKategori) 
-            ? rawKategori as ActivityCategory 
-            : ActivityCategory.R;
+        lastNo = row[0] ? String(row[0]).trim() : String(index + 1);
+        lastKegiatan = String(colKegiatan).trim();
+
+        const rawKategori = getVal(2).toUpperCase();
+        lastKategori = ['R', 'NR', 'E'].includes(rawKategori)
+          ? (rawKategori as ActivityCategory)
+          : ActivityCategory.R;
       }
 
       // Skip row if no hazard identification is present
@@ -472,12 +470,12 @@ export class HiracService {
 
       // Validate Risk Levels (Map full names to initials L, M, H, E)
       const normalizeRisk = (val: string): RiskLevel => {
-          const v = val.toUpperCase();
-          if (v === 'LOW' || v === 'L') return 'L' as RiskLevel;
-          if (v === 'MEDIUM' || v === 'M') return 'M' as RiskLevel;
-          if (v === 'HIGH' || v === 'H') return 'H' as RiskLevel;
-          if (v === 'EXTREME' || v === 'E') return 'E' as RiskLevel;
-          return 'L' as RiskLevel;
+        const v = val.toUpperCase();
+        if (v === 'LOW' || v === 'L') return 'L' as RiskLevel;
+        if (v === 'MEDIUM' || v === 'M') return 'M' as RiskLevel;
+        if (v === 'HIGH' || v === 'H') return 'H' as RiskLevel;
+        if (v === 'EXTREME' || v === 'E') return 'E' as RiskLevel;
+        return 'L' as RiskLevel;
       };
 
       validHiracs.push({
@@ -492,13 +490,15 @@ export class HiracService {
         risikoDapatDiterimaAwal: getVal(8).toUpperCase() === 'Y',
         peraturanTerkait: row[9] ? String(row[9]).trim() : null,
         pengendalian: getVal(10),
-        penilaianLanjutanAkibat: parseInt(getVal(11, '0')), 
+        penilaianLanjutanAkibat: parseInt(getVal(11, '0')),
         penilaianLanjutanKemungkinan: getVal(12, 'A').toUpperCase(),
         penilaianLanjutanTingkatRisiko: normalizeRisk(getVal(13, 'L')),
         risikoDapatDiterimaLanjutan: getVal(14).toUpperCase() === 'Y',
         peluang: row[15] ? String(row[15]).trim() : null,
         picId: row[16] ? String(row[16]).trim() : null,
-        status: (getVal(17, 'OPEN').toUpperCase() as StatusControl) || StatusControl.OPEN,
+        status:
+          (getVal(17, 'OPEN').toUpperCase() as StatusControl) ||
+          StatusControl.OPEN,
         projectId,
         isActive: true,
       });

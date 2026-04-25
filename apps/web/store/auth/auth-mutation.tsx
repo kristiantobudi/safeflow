@@ -1,4 +1,3 @@
-import { AuthState } from '@/types/auth-state';
 import { ErrorHandling } from '@/lib/error-handling';
 import {
   loginUser,
@@ -21,17 +20,11 @@ export default function useAuthMutation() {
     onSuccess: (data, variable) => {
       const authData = data.data;
 
-      queryClient.setQueryData<AuthState>(['auth'], {
-        token: authData.accessToken,
-        id: authData.user.id,
-        role: authData.user.role,
-        name: authData.user.firstName + ' ' + (authData.user.lastName ?? ''),
-        email: authData.user.email,
-        avatarUrl: authData.user.avatarUrl,
-      });
-
       setCookie('userId', authData.user.id);
       setCookie('token', authData.accessToken);
+
+      // Invalidate so useAuthQuery refetches with the new token
+      queryClient.invalidateQueries({ queryKey: ['auth-me'] });
 
       toast('Login Success', {
         style: {
@@ -72,6 +65,7 @@ export default function useAuthMutation() {
       deleteCookie('userId');
       deleteCookie('email');
       deleteCookie('role');
+      queryClient.removeQueries({ queryKey: ['auth-me'] });
       router.push('/auth');
     },
     onError: (error: AxiosError<{ message: string }>) => {
